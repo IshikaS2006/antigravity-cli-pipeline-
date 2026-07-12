@@ -1,6 +1,7 @@
 import subprocess
 import time
 import shutil
+import json 
 from pathlib import Path
 from datetime import datetime
 
@@ -16,7 +17,8 @@ POLL_INTERVAL = 2
 QUIET_PERIOD = 45       # seconds of TRUE silence (no new files at all) before we call it done
 
 # --- Create a fresh, timestamped job folder ---
-job_id = datetime.now().strftime("job_%Y%m%d_%H%M%S")
+AGENT_NAME = "antigravity"
+job_id = datetime.now().strftime(f"job_%Y%m%d_%H%M%S_{AGENT_NAME}")
 job_dir = JOBS_ROOT / job_id
 job_dir.mkdir(parents=True, exist_ok=False)
 
@@ -29,7 +31,9 @@ else:
 
 # Read user requirements
 requirements_file = JOBS_ROOT / "requirements.txt"
-if not requirements_file.exists():
+if requirements_file.exists():
+    shutil.copy(requirements_file, job_dir / "requirements.txt")
+else:
     raise FileNotFoundError(f"Missing: {requirements_file}")
 
 user_prompt = requirements_file.read_text(encoding="utf-8").strip()
@@ -58,10 +62,12 @@ last_activity_time = time.time()   # updated any time the file set CHANGES, not 
 seen_files = set(before_files)     # everything we've already counted
 stdout_data = ""
 stderr_data = ""
+completion_reason = None
 
 while True:
     if proc.poll() is not None:
         stdout_data, stderr_data = proc.communicate()
+        completion_reason = "process_exited"
         print("agy exited on its own.")
         break
 
@@ -82,18 +88,22 @@ while True:
                 proc.wait(timeout=5)
             except subprocess.TimeoutExpired:
                 proc.kill()
+            stdout_data, stderr_data = proc.communicate()
+            completion_reason = "quiet_period_complete"
             break
 
     if time.time() - start > MAX_WAIT:
         print("Hit max wait time — force killing agy.")
         proc.kill()
+        stdout_data, stderr_data = proc.communicate()
+        completion_reason = "timeout"
         break
 
     time.sleep(POLL_INTERVAL)
 
 if stdout_data:
     print(stdout_data)
-    (job_dir / "agy_reply.md").write_text(stdout_data, encoding="utf-8")
+    (job_dir / "reply.md").write_text(stdout_data, encoding="utf-8")
 
 # Rescue anything that leaked into scratch
 after_scratch = set(SCRATCH_DIR.rglob("*")) if SCRATCH_DIR.exists() else set()
@@ -102,6 +112,38 @@ for f in [f for f in (after_scratch - before_scratch) if f.is_file()]:
     dest = job_dir / f.name
     shutil.move(str(f), dest)
     print(f"Rescued from scratch -> {dest}")
+    
+end_time = time.time()
+if completion_reason == "quiet_period_complete":
+    status = "success"
+elif completion_reason == "timeout":
+    status = "timeout"
+elif completion_reason == "process_exited":
+    status = "success" if proc.returncode == 0 else "error"
+else:
+    status = "unknown"
+
+metadata = {
+    "job_id": job_id,
+    "agent_name": AGENT_NAME,
+    "started_at": datetime.fromtimestamp(start).isoformat(),
+    "ended_at": datetime.fromtimestamp(end_time).isoformat(),
+    "duration_seconds": round(end_time - start, 2),
+    "exit_code": proc.returncode,
+    "completion_reason": completion_reason,
+    "status": status,
+    "stderr_captured": bool(stderr_data),
+}
+(job_dir / "metadata.json").write_text(json.dumps(metadata, indent=2), encoding="utf-8")
+if stderr_data:
+    (job_dir / "stderr.log").write_text(stderr_data, encoding="utf-8")
+META_FILES = {"GEMINI.md", "requirements.txt", "reply.md", "metadata.json","stderr.log"}
+generated_dir = job_dir / "generated"
+generated_dir.mkdir(exist_ok=True)
+
+for f in job_dir.iterdir():
+    if f.is_file() and f.name not in META_FILES:
+        shutil.move(str(f), generated_dir / f.name)
 
 final_files = [f for f in job_dir.rglob("*") if f.is_file()]
 
