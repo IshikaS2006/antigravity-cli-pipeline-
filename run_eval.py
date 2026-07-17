@@ -8,7 +8,7 @@ from evaluation.evaluators.sandbox_exec import run_sandbox_on_job
 from evaluation.scorecard import build_scorecard, save_scorecard
 from evaluation.evaluators.test_execution import run_test_evaluation_on_job
 from evaluation.evaluators.llm_judge import run_llm_judge
-from evaluation.dashboard.render_html import save_scorecard_html
+from docs.render_html import save_scorecard_html
 
 def main():
     parser = argparse.ArgumentParser()
