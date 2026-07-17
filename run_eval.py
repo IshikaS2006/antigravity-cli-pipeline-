@@ -8,7 +8,7 @@ from evaluation.evaluators.sandbox_exec import run_sandbox_on_job
 from evaluation.scorecard import build_scorecard, save_scorecard
 from evaluation.evaluators.test_execution import run_test_evaluation_on_job
 from evaluation.evaluators.llm_judge import run_llm_judge
-
+from evaluation.dashboard.render_html import save_scorecard_html
 
 def main():
     parser = argparse.ArgumentParser()
@@ -30,10 +30,11 @@ def main():
 
         scorecard = build_scorecard(job_dir, metadata, static_analysis, sandbox_execution, test_results, llm_judge)
         scorecard_path = save_scorecard(job_dir, scorecard)
-
+        html_path = save_scorecard_html(job_dir, scorecard)
         print("Metadata:", metadata)
         print("Generated files:", [f.name for f in files])
         print(f"\nScorecard saved to: {scorecard_path}")
+        print(f"HTML report saved to: {html_path}")
         print(json.dumps(scorecard, indent=2))
     except Exception as e:
         print(f"Eval failed: {e}", file=sys.stderr)

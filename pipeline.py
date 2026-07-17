@@ -47,7 +47,7 @@ print("=" * 50)
 before_files = set(job_dir.rglob("*"))
 
 proc = subprocess.Popen(
-    [AGY_PATH, "--add-dir", str(job_dir), "--print", user_prompt],
+    [AGY_PATH, "--add-dir", str(job_dir), "--dangerously-skip-permissions", "--print", user_prompt],
     cwd=job_dir,
     stdout=subprocess.PIPE,
     stderr=subprocess.PIPE,
