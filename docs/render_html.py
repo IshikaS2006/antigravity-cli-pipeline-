@@ -6,7 +6,7 @@ TEMPLATE = """<!DOCTYPE html>
 <head>
 <meta charset="UTF-8">
 <title>Scorecard — {job_id}</title>
-<link rel="stylesheet" href="scorecard.css">
+<link rel="stylesheet" href="render_css.css">
 </head>
 <body>
   <h1>{job_id}
