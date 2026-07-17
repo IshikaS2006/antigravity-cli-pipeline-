@@ -4,14 +4,11 @@ import shutil
 import json 
 from pathlib import Path
 from datetime import datetime
-
 from guardrails import validate_prompt
 
 # --- Config ---
 AGY_PATH = r"C:\Users\Lenovo\AppData\Local\agy\bin\agy.exe"
-SCRATCH_DIR = Path.home() / ".gemini" / "antigravity-cli" / "scratch"
 JOBS_ROOT = Path("jobs").resolve()  # One trusted root for everything
-
 MAX_WAIT = 900          # generous ceiling for a full multi-file build
 POLL_INTERVAL = 2
 QUIET_PERIOD = 45       # seconds of TRUE silence (no new files at all) before we call it done
@@ -46,10 +43,9 @@ print(user_prompt)
 print("=" * 50)
 
 before_files = set(job_dir.rglob("*"))
-before_scratch = set(SCRATCH_DIR.rglob("*")) if SCRATCH_DIR.exists() else set()
 
 proc = subprocess.Popen(
-    [AGY_PATH, "--add-dir", str(job_dir), "--sandbox", "--print", user_prompt],
+    [AGY_PATH, "--add-dir", str(job_dir), "--print", user_prompt],
     cwd=job_dir,
     stdout=subprocess.PIPE,
     stderr=subprocess.PIPE,
@@ -104,14 +100,6 @@ while True:
 if stdout_data:
     print(stdout_data)
     (job_dir / "reply.md").write_text(stdout_data, encoding="utf-8")
-
-# Rescue anything that leaked into scratch
-after_scratch = set(SCRATCH_DIR.rglob("*")) if SCRATCH_DIR.exists() else set()
-
-for f in [f for f in (after_scratch - before_scratch) if f.is_file()]:
-    dest = job_dir / f.name
-    shutil.move(str(f), dest)
-    print(f"Rescued from scratch -> {dest}")
     
 end_time = time.time()
 if completion_reason == "quiet_period_complete":

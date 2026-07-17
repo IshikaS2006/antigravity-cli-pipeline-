@@ -1,8 +1,7 @@
 from pathlib import Path
-from evaluation.runners.base_runner import BaseRunner
 from evaluation.contracts.job_schema import validate_job_dir
 
-class AntigravityRunner(BaseRunner):
+class StandardRunner:
     agent_name = "antigravity"
 
     def validate(self, job_dir: Path) -> dict:

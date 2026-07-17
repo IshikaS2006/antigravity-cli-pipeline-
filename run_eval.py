@@ -1,7 +1,7 @@
 import sys
 import json
 from pathlib import Path
-from evaluation.runners.antigravity_runner import AntigravityRunner
+from evaluation.runners.standard_runner import StandardRunner
 from evaluation.evaluators.static_analysis import run_static_analysis_on_job
 from evaluation.evaluators.sandbox_exec import run_sandbox_on_job
 from evaluation.scorecard import build_scorecard, save_scorecard
@@ -10,7 +10,7 @@ from evaluation.evaluators.llm_judge import run_llm_judge
 
 
 job_dir = Path(sys.argv[1]).resolve()
-runner = AntigravityRunner()
+runner = StandardRunner()
 
 metadata = runner.validate(job_dir)
 files = runner.get_generated_files(job_dir)
