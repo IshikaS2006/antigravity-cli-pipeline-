@@ -2,6 +2,7 @@ import subprocess
 import time
 import shutil
 import json 
+import sys
 from pathlib import Path
 from datetime import datetime
 from guardrails import validate_prompt
@@ -12,6 +13,7 @@ JOBS_ROOT = Path("jobs").resolve()  # One trusted root for everything
 MAX_WAIT = 900          # generous ceiling for a full multi-file build
 POLL_INTERVAL = 2
 QUIET_PERIOD = 45       # seconds of TRUE silence (no new files at all) before we call it done
+EVAL_SCRIPT = Path(__file__).resolve().parent / "run_eval.py"
 
 # --- Create a fresh, timestamped job folder ---
 AGENT_NAME = "antigravity"
@@ -132,6 +134,26 @@ generated_dir.mkdir(exist_ok=True)
 for f in job_dir.iterdir():
     if f.is_file() and f.name not in META_FILES:
         shutil.move(str(f), generated_dir / f.name)
+
+if status == "success":
+    print(f"\nRunning eval for {job_id}...")
+    eval_result = subprocess.run(
+        [sys.executable, str(EVAL_SCRIPT), "--job", str(job_dir)],
+        cwd=EVAL_SCRIPT.parent,
+        capture_output=True,
+        text=True,
+        timeout=300,
+    )
+    eval_ok = eval_result.returncode == 0
+    print(eval_result.stdout)
+    if not eval_ok:
+        print(f"[eval] failed: {eval_result.stderr}")
+    metadata["eval_status"] = "completed" if eval_ok else "failed"
+else:
+    print(f"\nSkipping eval — job status is '{status}'.")
+    metadata["eval_status"] = "skipped"
+
+(job_dir / "metadata.json").write_text(json.dumps(metadata, indent=2), encoding="utf-8")
 
 final_files = [f for f in job_dir.rglob("*") if f.is_file()]
 

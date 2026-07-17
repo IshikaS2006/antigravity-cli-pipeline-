@@ -1,5 +1,6 @@
 import sys
 import json
+import argparse
 from pathlib import Path
 from evaluation.runners.standard_runner import StandardRunner
 from evaluation.evaluators.static_analysis import run_static_analysis_on_job
@@ -9,22 +10,37 @@ from evaluation.evaluators.test_execution import run_test_evaluation_on_job
 from evaluation.evaluators.llm_judge import run_llm_judge
 
 
-job_dir = Path(sys.argv[1]).resolve()
-runner = StandardRunner()
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--job", required=True, help="Path to job directory")
+    args = parser.parse_args()
 
-metadata = runner.validate(job_dir)
-files = runner.get_generated_files(job_dir)
-reply = runner.get_reply(job_dir)
+    job_dir = Path(args.job).resolve()
+    runner = StandardRunner()
 
-static_analysis = run_static_analysis_on_job(files)
-sandbox_execution = run_sandbox_on_job(files)
-test_results = run_test_evaluation_on_job(files)
-llm_judge = run_llm_judge(job_dir, files, static_analysis, sandbox_execution)
+    try:
+        metadata = runner.validate(job_dir)
+        files = runner.get_generated_files(job_dir)
+        reply = runner.get_reply(job_dir)
 
-scorecard = build_scorecard(job_dir, metadata, static_analysis, sandbox_execution, test_results, llm_judge)
-scorecard_path = save_scorecard(job_dir, scorecard)
+        static_analysis = run_static_analysis_on_job(files)
+        sandbox_execution = run_sandbox_on_job(files)
+        test_results = run_test_evaluation_on_job(files)
+        llm_judge = run_llm_judge(job_dir, files, static_analysis, sandbox_execution)
 
-print("Metadata:", metadata)
-print("Generated files:", [f.name for f in files])
-print(f"\nScorecard saved to: {scorecard_path}")
-print(json.dumps(scorecard, indent=2))
+        scorecard = build_scorecard(job_dir, metadata, static_analysis, sandbox_execution, test_results, llm_judge)
+        scorecard_path = save_scorecard(job_dir, scorecard)
+
+        print("Metadata:", metadata)
+        print("Generated files:", [f.name for f in files])
+        print(f"\nScorecard saved to: {scorecard_path}")
+        print(json.dumps(scorecard, indent=2))
+    except Exception as e:
+        print(f"Eval failed: {e}", file=sys.stderr)
+        sys.exit(1)
+
+    sys.exit(0)
+
+
+if __name__ == "__main__":
+    main()
