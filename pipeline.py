@@ -6,18 +6,27 @@ import sys
 from pathlib import Path
 from datetime import datetime
 from guardrails import validate_prompt
+import argparse
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # --- Config ---
-AGY_PATH = r"C:\Users\Lenovo\AppData\Local\agy\bin\agy.exe"
+AGY_PATH = os.getenv("AGY_PATH")
 JOBS_ROOT = Path("jobs").resolve()  # One trusted root for everything
 MAX_WAIT = 900          # generous ceiling for a full multi-file build
 POLL_INTERVAL = 2
 QUIET_PERIOD = 45       # seconds of TRUE silence (no new files at all) before we call it done
 EVAL_SCRIPT = Path(__file__).resolve().parent / "run_eval.py"
 
+parser = argparse.ArgumentParser()
+parser.add_argument("--variant-id", default=None, help="Optional variant tag for batch runs")
+args, _ = parser.parse_known_args()
+
 # --- Create a fresh, timestamped job folder ---
 AGENT_NAME = "antigravity"
-job_id = datetime.now().strftime(f"job_%Y%m%d_%H%M%S_{AGENT_NAME}")
+job_id = datetime.now().strftime(f"job_%Y%m%d_%H%M%S_%f_{AGENT_NAME}")
 job_dir = JOBS_ROOT / job_id
 job_dir.mkdir(parents=True, exist_ok=False)
 
@@ -116,6 +125,7 @@ else:
 metadata = {
     "job_id": job_id,
     "agent_name": AGENT_NAME,
+    "variant_id": args.variant_id,
     "started_at": datetime.fromtimestamp(start).isoformat(),
     "ended_at": datetime.fromtimestamp(end_time).isoformat(),
     "duration_seconds": round(end_time - start, 2),
@@ -160,5 +170,5 @@ final_files = [f for f in job_dir.rglob("*") if f.is_file()]
 print(f"\nFiles in {job_dir.name}:")
 for f in final_files:
     print(" -", f.relative_to(job_dir))
-
+print(f"JOB_ID:{job_id}")
 print(f"\nPipeline Finished! Output at: {job_dir}")

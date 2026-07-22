@@ -12,6 +12,7 @@ def build_scorecard(job_dir: Path, metadata: dict, static_analysis: dict, sandbo
     scorecard = {
         "job_id": metadata.get("job_id"),
         "agent_name": metadata.get("agent_name"),
+        "variant_id": metadata.get("variant_id"),
         "generation_status": metadata.get("status"),
         "generation_duration_seconds": metadata.get("duration_seconds"),
         "evaluated_at": datetime.now().isoformat(),

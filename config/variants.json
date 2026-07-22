@@ -1,0 +1,17 @@
+[
+  {
+    "variant_id": "formal_spec",
+    "label": "Formal requirements list",
+    "prompt": "Build a command-line calculator in Python.\nRequirements:\n- Support addition, subtraction, multiplication and division.\n- Organize the project into multiple files (calculator.py, main.py, etc.).\n- Handle invalid input and division by zero gracefully.\n- Include proper docstrings and comments where appropriate.\n- Generate unit tests using pytest.\n- Include a README explaining how to run the project."
+  },
+  {
+    "variant_id": "casual_ask",
+    "label": "Casual one-liner",
+    "prompt": "make me a python calculator that can add subtract multiply divide, handle bad input like dividing by zero, split it into a few files, add pytest tests and a readme"
+  },
+  {
+    "variant_id": "verbose_spec",
+    "label": "Verbose with architecture hints",
+    "prompt": "I need a well-structured command-line calculator application written in Python. It should be modular, with separate files for the core arithmetic logic and the entry point / CLI interaction. Support the four basic operations (add, subtract, multiply, divide), and make sure edge cases like division by zero and non-numeric input are handled without crashing. Please include docstrings, inline comments where the logic isn't obvious, a pytest-based test suite covering the core operations and edge cases, and a README.md that explains setup and usage."
+  }
+]
