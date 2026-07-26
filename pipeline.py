@@ -17,11 +17,13 @@ AGY_PATH = os.getenv("AGY_PATH")
 JOBS_ROOT = Path("jobs").resolve()  # One trusted root for everything
 MAX_WAIT = 900          # generous ceiling for a full multi-file build
 POLL_INTERVAL = 2
-QUIET_PERIOD = 45       # seconds of TRUE silence (no new files at all) before we call it done
+QUIET_PERIOD = 20          # gap after generation is underway
+STARTUP_GRACE = 30         # minimum time before we even consider "no files" a problem
 EVAL_SCRIPT = Path(__file__).resolve().parent / "run_eval.py"
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--variant-id", default=None, help="Optional variant tag for batch runs")
+parser.add_argument("--requirements-file", default=None, help="Path to this job's requirements file")
 args, _ = parser.parse_known_args()
 
 # --- Create a fresh, timestamped job folder ---
@@ -38,7 +40,7 @@ else:
     raise FileNotFoundError(f"Missing: {system_prompt_file}")
 
 # Read user requirements
-requirements_file = JOBS_ROOT / "requirements.txt"
+requirements_file = Path(args.requirements_file).resolve() if args.requirements_file else JOBS_ROOT / "requirements.txt"
 if requirements_file.exists():
     shutil.copy(requirements_file, job_dir / "requirements.txt")
 else:
@@ -88,7 +90,8 @@ while True:
         print(f"New file(s) detected: {[f.name for f in new_files]}")
     else:
         idle_for = time.time() - last_activity_time
-        if idle_for > QUIET_PERIOD:
+        elapsed = time.time() - start
+        if elapsed > STARTUP_GRACE and idle_for > QUIET_PERIOD:
             print(f"No new files for {QUIET_PERIOD}s — treating generation as complete. Terminating agy.")
             proc.terminate()
             try:

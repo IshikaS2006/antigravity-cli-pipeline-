@@ -9,7 +9,12 @@ class StandardRunner:
 
     def get_generated_files(self, job_dir: Path) -> list[Path]:
         generated_dir = job_dir / "generated"
-        return list(generated_dir.rglob("*")) if generated_dir.exists() else []
+        if not generated_dir.exists():
+            return []
+        return [
+            f for f in generated_dir.rglob("*.py")
+            if f.is_file() and "__pycache__" not in f.parts
+        ]
 
     def get_reply(self, job_dir: Path) -> str:
         reply_path = job_dir / "reply.md"

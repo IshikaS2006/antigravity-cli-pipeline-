@@ -3,6 +3,7 @@ import sys
 import json
 from pathlib import Path
 from datetime import datetime
+import time 
 
 VARIANTS_FILE = Path("config/variants.json")
 REQUIREMENTS_FILE = Path("jobs/requirements.txt")
@@ -14,6 +15,7 @@ MANIFEST_FILE = batch_dir / "manifest.json"
 
 variants = json.loads(VARIANTS_FILE.read_text(encoding="utf-8"))
 manifest = []
+batch_start = time.time()   # add this
 
 for variant in variants:
     print(f"\n=== Running variant: {variant['variant_id']} ===")
@@ -28,12 +30,8 @@ for variant in variants:
 
     if result.returncode != 0:
         print(f"[batch] variant {variant['variant_id']} failed: {result.stderr}")
-        manifest.append({
-            "variant_id": variant["variant_id"],
-            "label": variant.get("label", ""),
-            "job_id": None,
-            "status": "failed",
-        })
+        manifest.append({"variant_id": variant["variant_id"], "label": variant.get("label", ""),
+                          "job_id": None, "status": "failed"})
         continue
 
     job_id = None
@@ -42,17 +40,18 @@ for variant in variants:
             job_id = line.split("JOB_ID:", 1)[1].strip()
             break
 
-    manifest.append({
-        "variant_id": variant["variant_id"],
-        "label": variant.get("label", ""),
-        "job_id": job_id,
-        "status": "success" if job_id else "unknown",
-    })
+    manifest.append({"variant_id": variant["variant_id"], "label": variant.get("label", ""),
+                      "job_id": job_id, "status": "success" if job_id else "unknown"})
 
-MANIFEST_FILE.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
+batch_end = time.time()   # add this
+manifest_summary = {
+    "total_duration_seconds": round(batch_end - batch_start, 2),
+    "variants": manifest,
+}
+MANIFEST_FILE.write_text(json.dumps(manifest_summary, indent=2), encoding="utf-8")
 print(f"\nBatch complete. Manifest saved to: {MANIFEST_FILE}")
+print(f"Total batch execution time: {batch_end - batch_start:.2f}s")
 
-# Auto-generate comparison report
 compare_result = subprocess.run(
     [sys.executable, "compare_scorecards.py", "--batch-dir", str(batch_dir)],
     capture_output=True,
