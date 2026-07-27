@@ -1,6 +1,11 @@
 from pathlib import Path
 from evaluation.contracts.job_schema import validate_job_dir
 
+# Extensions relevant to an AL/Business Central job. Add more here if your
+# prompts start asking for other file types (e.g. .rdlc for reports).
+AL_RELEVANT_EXTENSIONS = {".al", ".json", ".md"}
+
+
 class StandardRunner:
     agent_name = "antigravity"
 
@@ -12,8 +17,10 @@ class StandardRunner:
         if not generated_dir.exists():
             return []
         return [
-            f for f in generated_dir.rglob("*.py")
-            if f.is_file() and "__pycache__" not in f.parts
+            f for f in generated_dir.rglob("*")
+            if f.is_file()
+            and f.suffix.lower() in AL_RELEVANT_EXTENSIONS
+            and "__pycache__" not in f.parts
         ]
 
     def get_reply(self, job_dir: Path) -> str:

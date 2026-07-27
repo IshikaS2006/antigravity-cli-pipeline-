@@ -3,12 +3,24 @@ from pathlib import Path
 from datetime import datetime
 
 
-def build_scorecard(job_dir: Path, metadata: dict, static_analysis: dict, sandbox_execution: dict, test_results: dict, llm_judge: dict) -> dict:
+def build_scorecard(job_dir: Path, metadata: dict, al_compile: dict,
+                     static_analysis: dict = None, test_execution: dict = None,
+                     sandbox_exec: dict = None, llm_judge: dict = None) -> dict:
     """
-    Aggregates all evaluator outputs into a single scorecard.
-    Additional evaluators (sandbox_exec, test_results, llm_judge) get added
-    as new keys here later — this function's shape is deliberately open-ended.
+    Aggregates evaluator output into a single scorecard.
+    al_compile is required (the core AL build check); the other four are
+    optional so older callers passing only al_compile still work.
     """
+    metrics = {"al_compile": al_compile}
+    if static_analysis is not None:
+        metrics["static_analysis"] = static_analysis
+    if test_execution is not None:
+        metrics["test_execution"] = test_execution
+    if sandbox_exec is not None:
+        metrics["sandbox_exec"] = sandbox_exec
+    if llm_judge is not None:
+        metrics["llm_judge"] = llm_judge
+
     scorecard = {
         "job_id": metadata.get("job_id"),
         "agent_name": metadata.get("agent_name"),
@@ -16,12 +28,7 @@ def build_scorecard(job_dir: Path, metadata: dict, static_analysis: dict, sandbo
         "generation_status": metadata.get("status"),
         "generation_duration_seconds": metadata.get("duration_seconds"),
         "evaluated_at": datetime.now().isoformat(),
-        "metrics": {
-            "static_analysis": static_analysis,
-            "sandbox_execution": sandbox_execution,   
-            "test_results": test_results,        
-            "llm_judge": llm_judge,            
-        },
+        "metrics": metrics,
     }
     return scorecard
 

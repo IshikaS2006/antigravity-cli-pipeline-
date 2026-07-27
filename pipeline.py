@@ -17,8 +17,8 @@ AGY_PATH = os.getenv("AGY_PATH")
 JOBS_ROOT = Path("jobs").resolve()  # One trusted root for everything
 MAX_WAIT = 900          # generous ceiling for a full multi-file build
 POLL_INTERVAL = 2
-QUIET_PERIOD = 20          # gap after generation is underway
-STARTUP_GRACE = 30         # minimum time before we even consider "no files" a problem
+QUIET_PERIOD = 90          # gap after generation is underway
+STARTUP_GRACE = 90       # was 30 — give to reason before its first write
 EVAL_SCRIPT = Path(__file__).resolve().parent / "run_eval.py"
 
 parser = argparse.ArgumentParser()
@@ -56,7 +56,7 @@ print(user_prompt)
 print("=" * 50)
 
 before_files = set(job_dir.rglob("*"))
-
+# [AGY_PATH, "--add-dir", str(job_dir), "--dangerously-skip-permissions", "--print", user_prompt],
 proc = subprocess.Popen(
     [AGY_PATH, "--add-dir", str(job_dir), "--dangerously-skip-permissions", "--print", user_prompt],
     cwd=job_dir,
@@ -145,8 +145,10 @@ generated_dir = job_dir / "generated"
 generated_dir.mkdir(exist_ok=True)
 
 for f in job_dir.iterdir():
-    if f.is_file() and f.name not in META_FILES:
-        shutil.move(str(f), generated_dir / f.name)
+    if f.name in META_FILES or f == generated_dir:
+        continue
+    dest = generated_dir / f.name
+    shutil.move(str(f), str(dest))
 
 if status == "success":
     print(f"\nRunning eval for {job_id}...")

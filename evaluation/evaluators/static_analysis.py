@@ -1,100 +1,108 @@
-import subprocess
-import json
+"""
+AL-focused static analysis. Instead of pylint (which doesn't understand AL),
+this reuses the AL compiler's own built-in analyzers: CodeCop, UICop, and
+PerTenantExtensionCop. These ship inside the same VS Code AL extension that
+provides alc.exe, so no extra tools/installs are needed.
+
+Assumes al_pipeline.py (your existing compile module) is importable and that
+symbols have already been downloaded for this project via download_symbols().
+"""
+
+import re
 from pathlib import Path
 
+from evaluation.evaluators.al_pipeline import (
+    resolve_alc_path,
+    resolve_analyzer_dlls,
+    compile_al_project,
+    default_symbols_dir,
+)
 
-def run_static_analysis(file_path: Path) -> dict:
+# Matches AL diagnostic lines, e.g.:
+#   app.json(13,3): warning AL0667: 'capabilities' is being deprecated...
+#   src\CustomerExt.TableExt.al(5,10): warning AA0072: The name...
+DIAGNOSTIC_PATTERN = re.compile(
+    r'(?P<file>[^\r\n]+?)\((?P<line>\d+),(?P<col>\d+)\):\s*'
+    r'(?P<severity>error|warning|info)\s+(?P<code>[A-Za-z]+\d+):\s*(?P<message>.+)'
+)
+
+# Code prefixes tell you which analyzer raised it
+ANALYZER_PREFIX = {
+    "AA": "CodeCop",
+    "AW": "UICop",
+    "PTE": "PerTenantExtensionCop",
+    "AS": "AppSourceCop",
+    "AL": "Compiler",  # base compiler diagnostics, not an analyzer rule
+}
+
+
+def parse_diagnostics(compiler_output: str) -> list[dict]:
+    diagnostics = []
+    for match in DIAGNOSTIC_PATTERN.finditer(compiler_output):
+        code = match.group("code")
+        prefix = re.match(r'[A-Za-z]+', code).group()
+        diagnostics.append({
+            "file": Path(match.group("file")).name,
+            "line": int(match.group("line")),
+            "severity": match.group("severity").lower(),
+            "code": code,
+            "source": ANALYZER_PREFIX.get(prefix, "Unknown"),
+            "message": match.group("message").strip(),
+        })
+    return diagnostics
+
+
+def run_static_analysis_on_job(project_dir: Path, symbols_dir: Path = None,
+                                alc_path: Path = None) -> dict:
     """
-    Runs pylint on a single Python file and returns a structured result.
-    Works on any .py file regardless of which agent generated it —
-    no antigravity-specific assumptions here.
+    Re-compiles the AL project with CodeCop/UICop/PerTenantExtensionCop enabled
+    and scores it based on the diagnostics they raise. Reuses symbols already
+    downloaded by al_compile, so this should run after that step succeeds.
     """
-    if not file_path.exists():
+    project_dir = Path(project_dir)
+    if symbols_dir is None:
+        symbols_dir = default_symbols_dir(project_dir)
+    if alc_path is None:
+        alc_path = resolve_alc_path()
+
+    analyzer_dlls = resolve_analyzer_dlls(alc_path)
+    if not analyzer_dlls:
         return {
-            "file": file_path.name,
             "status": "error",
-            "error": "file not found",
+            "error": "Could not locate analyzer DLLs (CodeCop/UICop/PerTenantExtensionCop) "
+                     "alongside alc.exe — check your AL extension install.",
         }
 
-    if file_path.suffix != ".py":
-        return {
-            "file": file_path.name,
-            "status": "skipped",
-            "reason": f"unsupported file type: {file_path.suffix}",
-        }
+    result = compile_al_project(
+        project_dir, symbols_dir, alc_path,
+        out_name="analysis_pass.app",  # separate output so it doesn't clobber al_compile's .app
+        analyzer_paths=analyzer_dlls,
+    )
 
-    try:
-        result = subprocess.run(
-            ["pylint", str(file_path), "--output-format=json"],
-            capture_output=True,
-            text=True,
-            timeout=60,
-        )
-    except subprocess.TimeoutExpired:
-        return {
-            "file": file_path.name,
-            "status": "error",
-            "error": "pylint timed out",
-        }
-    except FileNotFoundError:
-        return {
-            "file": file_path.name,
-            "status": "error",
-            "error": "pylint not installed — run: pip install pylint",
-        }
+    combined_output = result["stdout"] + "\n" + result["stderr"]
+    diagnostics = parse_diagnostics(combined_output)
 
-    # pylint exits non-zero even on successful runs (nonzero = issues found),
-    # so don't treat returncode alone as failure. Only stdout parsing matters.
-    try:
-        issues = json.loads(result.stdout) if result.stdout.strip() else []
-    except json.JSONDecodeError:
-        return {
-            "file": file_path.name,
-            "status": "error",
-            "error": "could not parse pylint output",
-            "raw_stderr": result.stderr[:500],
-        }
+    # Only count analyzer-raised issues for scoring, not base compiler AL#### diagnostics
+    # (those are already captured by your al_compile success/fail check).
+    analyzer_diagnostics = [d for d in diagnostics if d["source"] != "Compiler"]
 
-    severity_counts = {"error": 0, "warning": 0, "convention": 0, "refactor": 0}
-    for issue in issues:
-        category = issue.get("type", "").lower()
-        if category in severity_counts:
-            severity_counts[category] += 1
+    severity_counts = {"error": 0, "warning": 0, "info": 0}
+    for d in analyzer_diagnostics:
+        if d["severity"] in severity_counts:
+            severity_counts[d["severity"]] += 1
 
-    # Simple 0-10 score: start at 10, dock points per issue by severity weight
     score = 10.0
     score -= severity_counts["error"] * 1.5
     score -= severity_counts["warning"] * 0.5
-    score -= severity_counts["convention"] * 0.2
-    score -= severity_counts["refactor"] * 0.3
+    score -= severity_counts["info"] * 0.1
     score = max(0.0, round(score, 2))
 
     return {
-        "file": file_path.name,
         "status": "success",
+        "compiled_clean": result["success"],
+        "analyzers_used": [Path(d).stem for d in analyzer_dlls],
         "score": score,
         "issue_counts": severity_counts,
-        "total_issues": len(issues),
-        "issues": [
-            {
-                "line": i.get("line"),
-                "type": i.get("type"),
-                "message": i.get("message"),
-                "symbol": i.get("symbol"),
-            }
-            for i in issues
-        ],
-    }
-
-
-def run_static_analysis_on_job(generated_files: list[Path]) -> dict:
-    """Runs static analysis across all generated files in a job and aggregates."""
-    results = [run_static_analysis(f) for f in generated_files if f.is_file()]
-    scored = [r for r in results if r.get("status") == "success"]
-    avg_score = round(sum(r["score"] for r in scored) / len(scored), 2) if scored else None
-
-    return {
-        "average_score": avg_score,
-        "files_analyzed": len(results),
-        "per_file": results,
+        "total_issues": len(analyzer_diagnostics),
+        "issues": analyzer_diagnostics,
     }

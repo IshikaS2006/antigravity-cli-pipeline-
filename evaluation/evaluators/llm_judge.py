@@ -1,12 +1,12 @@
+import os
 import subprocess
 import json
 import re
 from pathlib import Path
 
-AGY_PATH = r"C:\Users\Lenovo\AppData\Local\agy\bin\agy.exe"
+AGY_PATH = os.getenv("AGY_PATH")
 
-
-def build_judge_prompt(requirements: str, code_contents: dict, static_analysis: dict, sandbox_execution: dict) -> str:
+def build_judge_prompt(requirements: str    , code_contents: dict, static_analysis: dict, sandbox_execution: dict) -> str:
     """Builds the judging prompt, including other evaluators' results as context."""
     code_section = "\n\n".join(
         f"--- {fname} ---\n{content}" for fname, content in code_contents.items()
@@ -42,7 +42,7 @@ def run_llm_judge(job_dir: Path, generated_files: list[Path], static_analysis: d
 
     code_contents = {}
     for f in generated_files:
-        if f.is_file() and f.suffix in {".py", ".js", ".ts", ".java"}:
+        if f.is_file() and f.suffix in {".py", ".js", ".ts", ".java", ".al", ".json", ".md"}:
             try:
                 code_contents[f.name] = f.read_text(encoding="utf-8")
             except Exception:
