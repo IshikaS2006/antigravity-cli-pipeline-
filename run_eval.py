@@ -36,19 +36,19 @@ def main():
             object_contract_future = executor.submit(run_manifest_validation_on_job, generated_dir)
             al_compile = run_full_pipeline(generated_dir, nuget_exe=NUGET_EXE_PATH, alc_path=alc_path)
 
-        # static_analysis re-compiles with analyzers on, reusing al_compile's
-        # symbols_dir — only run it if al_compile actually succeeded.
-        if al_compile.get("success"):
-            static_analysis = run_static_analysis_on_job(
-                generated_dir, symbols_dir=Path(al_compile["symbols_dir"]), alc_path=alc_path
-            )
-        else:
-            static_analysis = {"status": "skipped", "reason": "al_compile did not succeed"}
+            # static_analysis re-compiles with analyzers on, reusing al_compile's
+            # symbols_dir — only run it if al_compile actually succeeded.
+            if al_compile.get("success"):
+                static_analysis = run_static_analysis_on_job(
+                    generated_dir, symbols_dir=Path(al_compile["symbols_dir"]), alc_path=alc_path
+                )
+            else:
+                static_analysis = {"status": "skipped", "reason": "al_compile did not succeed"}
 
-        llm_judge_future = executor.submit(run_llm_judge, job_dir, files, static_analysis)
+            llm_judge_future = executor.submit(run_llm_judge, job_dir, files, static_analysis)
 
-        object_contract = object_contract_future.result()
-        llm_judge = llm_judge_future.result()
+            object_contract = object_contract_future.result()
+            llm_judge = llm_judge_future.result()
 
         scorecard = build_scorecard(
             job_dir,

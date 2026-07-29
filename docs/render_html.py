@@ -29,6 +29,15 @@ def _card(title, rows_html, empty_message=None):
         body = rows_html
     return f'<div class="card"><h2>{title}</h2>{body}</div>'
 
+def _severity_badge(severity):
+    colors = {"error": "#c0392b", "warning": "#b7791f", "info": "#2b6cb0"}
+    color = colors.get(severity, "#666")
+    return (
+        f'<span style="display:inline-block;padding:2px 8px;border-radius:10px;'
+        f'font-size:11px;font-weight:600;text-transform:uppercase;color:#fff;'
+        f'background:{color};margin-right:6px;">{severity}</span>'
+    )
+
 def _row(label, value):
     return f'<div class="row"><span class="label">{label}</span><span>{value}</span></div>'
 
@@ -47,11 +56,11 @@ def render_scorecard_html(scorecard: dict) -> str:
         rows += _row("Compiled clean", sa.get("compiled_clean"))
         rows += _row("Total issues", sa.get("total_issues"))
         counts = sa.get("issue_counts", {})
-        rows += _row("Errors / Warnings / Info",
-                      f"{counts.get('error', 0)} / {counts.get('warning', 0)} / {counts.get('info', 0)}")
+        
         for issue in sa.get("issues", []):
+            severity = issue.get("severity", "info")
             rows += _row(
-                f"{issue.get('file')}:{issue.get('line')} [{issue.get('code')}]",
+                f"{_severity_badge(severity)}{issue.get('file')}:{issue.get('line')} [{issue.get('code')}]",
                 issue.get("message", "")
             )
         static_card = _card("Static Analysis", rows)
