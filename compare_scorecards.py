@@ -104,10 +104,8 @@ def build_comparison_html(batch_id: str, manifest: list, scorecards: dict) -> st
         lambda sc: sc["metrics"]["static_analysis"].get("average_score") if sc else None))
     rows.append(metric_row("Files analyzed",
         lambda sc: sc["metrics"]["static_analysis"].get("files_analyzed") if sc else None))
-    rows.append(metric_row("Sandbox: successful runs",
-        lambda sc: f"{sc['metrics']['sandbox_execution'].get('successful_runs')}/{sc['metrics']['sandbox_execution'].get('files_tested')}" if sc else None))
-    rows.append(metric_row("Test results",
-        lambda sc: sc["metrics"]["test_results"].get("status") if sc else None))
+    rows.append(metric_row("Object contract",
+      lambda sc: sc["metrics"]["object_contract"].get("passed") if sc and "object_contract" in sc["metrics"] else None))
     rows.append(metric_row("LLM judge",
         lambda sc: sc["metrics"]["llm_judge"].get("status") if sc else None))
     rows.append(metric_row("Job ID",

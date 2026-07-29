@@ -82,6 +82,14 @@ def run_static_analysis_on_job(project_dir: Path, symbols_dir: Path = None,
     combined_output = result["stdout"] + "\n" + result["stderr"]
     diagnostics = parse_diagnostics(combined_output)
 
+    # Only the diagnostic text matters here, not the compiled binary itself —
+    # clean it up so we don't leave a second, unused .app file per job.
+    if result.get("out_file"):
+        try:
+            Path(result["out_file"]).unlink(missing_ok=True)
+        except Exception:
+            pass
+
     # Only count analyzer-raised issues for scoring, not base compiler AL#### diagnostics
     # (those are already captured by your al_compile success/fail check).
     analyzer_diagnostics = [d for d in diagnostics if d["source"] != "Compiler"]

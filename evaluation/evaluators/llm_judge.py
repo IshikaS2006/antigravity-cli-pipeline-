@@ -6,7 +6,7 @@ from pathlib import Path
 
 AGY_PATH = os.getenv("AGY_PATH")
 
-def build_judge_prompt(requirements: str    , code_contents: dict, static_analysis: dict, sandbox_execution: dict) -> str:
+def build_judge_prompt(requirements: str    , code_contents: dict, static_analysis: dict) -> str:
     """Builds the judging prompt, including other evaluators' results as context."""
     code_section = "\n\n".join(
         f"--- {fname} ---\n{content}" for fname, content in code_contents.items()
@@ -23,9 +23,6 @@ GENERATED CODE:
 STATIC ANALYSIS RESULT (for context, do not re-derive):
 {json.dumps(static_analysis, indent=2)[:1000]}
 
-EXECUTION RESULT (for context):
-{json.dumps(sandbox_execution, indent=2)[:500]}
-
 Respond with ONLY a JSON object, no other text, in this exact format:
 {{
   "requirement_fulfilled": true or false,
@@ -36,7 +33,7 @@ Respond with ONLY a JSON object, no other text, in this exact format:
 }}"""
 
 
-def run_llm_judge(job_dir: Path, generated_files: list[Path], static_analysis: dict, sandbox_execution: dict, timeout: int = 120) -> dict:
+def run_llm_judge(job_dir: Path, generated_files: list[Path], static_analysis: dict, timeout: int = 120) -> dict:
     requirements_file = job_dir / "requirements.txt"
     requirements_text = requirements_file.read_text(encoding="utf-8") if requirements_file.exists() else ""
 
@@ -51,7 +48,7 @@ def run_llm_judge(job_dir: Path, generated_files: list[Path], static_analysis: d
     if not code_contents:
         return {"status": "skipped", "reason": "no readable code files found"}
 
-    prompt = build_judge_prompt(requirements_text, code_contents, static_analysis, sandbox_execution)
+    prompt = build_judge_prompt(requirements_text, code_contents, static_analysis)
 
     try:
         result = subprocess.run(

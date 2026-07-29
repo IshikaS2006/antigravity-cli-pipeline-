@@ -4,20 +4,18 @@ from datetime import datetime
 
 
 def build_scorecard(job_dir: Path, metadata: dict, al_compile: dict,
-                     static_analysis: dict = None, test_execution: dict = None,
-                     sandbox_exec: dict = None, llm_judge: dict = None) -> dict:
+                     static_analysis: dict = None, object_contract: dict = None,
+                     llm_judge: dict = None) -> dict:
     """
     Aggregates evaluator output into a single scorecard.
-    al_compile is required (the core AL build check); the other four are
+    al_compile is required (the core AL build check); the other checks are
     optional so older callers passing only al_compile still work.
     """
     metrics = {"al_compile": al_compile}
     if static_analysis is not None:
         metrics["static_analysis"] = static_analysis
-    if test_execution is not None:
-        metrics["test_execution"] = test_execution
-    if sandbox_exec is not None:
-        metrics["sandbox_exec"] = sandbox_exec
+    if object_contract is not None:
+        metrics["object_contract"] = object_contract
     if llm_judge is not None:
         metrics["llm_judge"] = llm_judge
 

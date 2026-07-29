@@ -22,8 +22,8 @@ Automates code generation by:
 Evaluates generated code across multiple quality dimensions:
 
 - Static Analysis (code quality and style)
+- Object Contract (manifest structure and object ID range validation)
 - Execution Evaluation (does the generated program execute successfully)
-- Test Execution (runs generated test cases when available)
 - LLM-as-Judge (qualitative evaluation using an agentic CLI)
 
 The evaluation framework is **agent-agnostic**. It interacts with generated outputs through a runner interface rather than directly accessing agent-specific folders. Supporting a new coding agent (Claude Code, Devin, Codex CLI, etc.) only requires implementing a new runner without modifying any evaluator logic.
@@ -64,8 +64,8 @@ antigravity-pipeline/
     │
     ├── evaluators/
     │   ├── static_analysis.py
+      │   ├── object_contract.py
     │   ├── execution.py
-    │   ├── test_execution.py
     │   └── llm_judge.py
     │
     ├── scorecard.py
@@ -152,8 +152,8 @@ The evaluator will:
 | Metric | Purpose |
 |---------|----------|
 | Static Analysis | Measures code quality and style |
+| Object Contract | Validates app.json structure and object IDs against declared ranges |
 | Execution Evaluation | Verifies the generated program executes successfully |
-| Test Execution | Executes generated tests and records pass/fait statistics |
 | LLM-as-Judge | Evaluates correctness, completeness, and overall implementation quality |
 
 ---
@@ -214,8 +214,8 @@ To support a new agent:
 No changes are required in:
 
 - Static Analysis
+- Object Contract
 - Execution Evaluation
-- Test Execution
 - LLM Judge
 - Score Aggregation
 

@@ -15,8 +15,7 @@ TEMPLATE = """<!DOCTYPE html>
   <div class="meta">Agent: {agent_name} · Duration: {duration}s · Evaluated: {evaluated_at}</div>
 
   {static_analysis_card}
-  {sandbox_card}
-  {test_card}
+    {object_contract_card}
   {llm_judge_card}
 
 </body>
@@ -57,28 +56,27 @@ def render_scorecard_html(scorecard: dict) -> str:
             )
         static_card = _card("Static Analysis", rows)
 
-    # Sandbox execution (Python-only right now; on hold for AL)
-    sb = metrics.get("sandbox_exec", {})
-    if sb.get("files_tested", 0) == 0:
-        sandbox_card = _card("Sandbox Execution", "", "No files tested (not applicable to AL yet).")
+    oc = metrics.get("object_contract", {})
+    if oc.get("status") != "success":
+        object_contract_card = _card(
+            "Object Contract", "",
+            oc.get("error") or "Object contract check did not run."
+        )
+    elif not oc.get("passed", False):
+        rows = _row("Objects checked", oc.get("objects_checked"))
+        rows += _row("Declared id ranges", json.dumps(oc.get("declared_id_ranges", [])))
+        problems = oc.get("structural_problems", [])
+        if problems:
+            rows += _row("Structural problems", "; ".join(problems))
+        out_of_range = oc.get("out_of_range_declarations", [])
+        if out_of_range:
+            rows += _row("Out of range declarations", json.dumps(out_of_range))
+        object_contract_card = _card("Object Contract", rows)
     else:
-        rows = _row("Files tested", sb.get("files_tested"))
-        rows += _row("Successful runs", sb.get("successful_runs"))
-        sandbox_card = _card("Sandbox Execution", rows)
-
-    # Test results (static AL test-codeunit check)
-    tr = metrics.get("test_execution", {})
-    if tr.get("status") == "no_tests_found":
-        test_card = _card("Test Results", "", tr.get("message", "No tests found."))
-    else:
-        rows = _row("Status", tr.get("status"))
-        rows += _row("Files tested", tr.get("files_tested"))
-        rows += _row("Total test methods", tr.get("total_test_methods"))
-        rows += _row("Total assertions", tr.get("total_assertions"))
-        hollow = tr.get("hollow_test_files", [])
-        if hollow:
-            rows += _row("Hollow tests (no assertions)", ", ".join(hollow))
-        test_card = _card("Test Results", rows)
+        rows = _row("Passed", oc.get("passed"))
+        rows += _row("Objects checked", oc.get("objects_checked"))
+        rows += _row("Declared id ranges", json.dumps(oc.get("declared_id_ranges", [])))
+        object_contract_card = _card("Object Contract", rows)
 
     # LLM judge
     lj = metrics.get("llm_judge", {})
@@ -98,8 +96,7 @@ def render_scorecard_html(scorecard: dict) -> str:
         gen_status=gen_status,
         gen_status_class=gen_status,
         static_analysis_card=static_card,
-        sandbox_card=sandbox_card,
-        test_card=test_card,
+        object_contract_card=object_contract_card,
         llm_judge_card=llm_card,
     )
 
