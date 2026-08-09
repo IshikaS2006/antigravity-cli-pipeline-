@@ -5,6 +5,7 @@ from datetime import datetime
 
 def build_scorecard(job_dir: Path, metadata: dict, al_compile: dict,
                      static_analysis: dict = None, object_contract: dict = None,
+                     security_permissions: dict = None, negative_cases: dict = None,
                      llm_judge: dict = None) -> dict:
     """
     Aggregates evaluator output into a single scorecard.
@@ -16,6 +17,10 @@ def build_scorecard(job_dir: Path, metadata: dict, al_compile: dict,
         metrics["static_analysis"] = static_analysis
     if object_contract is not None:
         metrics["object_contract"] = object_contract
+    if security_permissions is not None:
+        metrics["security_permissions"] = security_permissions
+    if negative_cases is not None:
+        metrics["negative_cases"] = negative_cases
     if llm_judge is not None:
         metrics["llm_judge"] = llm_judge
 

@@ -16,6 +16,8 @@ TEMPLATE = """<!DOCTYPE html>
 
   {static_analysis_card}
     {object_contract_card}
+    {security_permissions_card}
+    {negative_cases_card}
   {llm_judge_card}
 
 </body>
@@ -87,6 +89,51 @@ def render_scorecard_html(scorecard: dict) -> str:
         rows += _row("Declared id ranges", json.dumps(oc.get("declared_id_ranges", [])))
         object_contract_card = _card("Object Contract", rows)
 
+    sp = metrics.get("security_permissions", {})
+    if sp.get("status") != "success":
+        security_permissions_card = _card(
+            "Security Permissions", "",
+            sp.get("error") or sp.get("reason") or "Security permission check did not run."
+        )
+    else:
+        rows = _row("Passed", sp.get("passed"))
+        rows += _row("Permission sets found", sp.get("permission_set_count"))
+        missing_roles = sp.get("missing_roles", [])
+        rows += _row("Missing roles", ", ".join(missing_roles) if missing_roles else "None")
+
+        violations = sp.get("violations", [])
+        rows += _row("Violations", "; ".join(violations) if violations else "None")
+
+        roles = sp.get("roles", {})
+        front = roles.get("front_desk", {})
+        finance = roles.get("finance", {})
+
+        rows += _row("Front Desk set", front.get("name") or "Not found")
+        rows += _row("Front Desk refund permissions", json.dumps(front.get("refund_permissions", [])))
+        rows += _row("Finance set", finance.get("name") or "Not found")
+        rows += _row("Finance refund permissions", json.dumps(finance.get("refund_permissions", [])))
+
+        security_permissions_card = _card("Security Permissions", rows)
+
+    nc = metrics.get("negative_cases", {})
+    if nc.get("status") != "success":
+        negative_cases_card = _card(
+            "Negative Cases", "",
+            nc.get("error") or nc.get("reason") or "Negative-case check did not run."
+        )
+    else:
+        rows = _row("Passed", nc.get("passed"))
+        failed_checks = nc.get("failed_checks", [])
+        rows += _row("Failed checks", ", ".join(failed_checks) if failed_checks else "None")
+
+        checks = nc.get("checks", {})
+        for check_name, check_result in checks.items():
+            rows += _row(f"{check_name} passed", check_result.get("passed"))
+            evidence = check_result.get("evidence", [])
+            rows += _row(f"{check_name} evidence", json.dumps(evidence[:3]))
+
+        negative_cases_card = _card("Negative Cases", rows)
+
     # LLM judge
     lj = metrics.get("llm_judge", {})
     if lj.get("status") == "skipped":
@@ -106,6 +153,8 @@ def render_scorecard_html(scorecard: dict) -> str:
         gen_status_class=gen_status,
         static_analysis_card=static_card,
         object_contract_card=object_contract_card,
+        security_permissions_card=security_permissions_card,
+        negative_cases_card=negative_cases_card,
         llm_judge_card=llm_card,
     )
 

@@ -75,6 +75,20 @@ def id_in_ranges(object_id: int, id_ranges: list[dict]) -> bool:
     return any(r.get("from", 0) <= object_id <= r.get("to", -1) for r in id_ranges)
 
 
+def _find_matching_brace(text: str, opening_brace_index: int) -> int:
+    """Returns the index of the matching closing brace for a given opening brace."""
+    depth = 0
+    for i in range(opening_brace_index, len(text)):
+        ch = text[i]
+        if ch == "{":
+            depth += 1
+        elif ch == "}":
+            depth -= 1
+            if depth == 0:
+                return i
+    return -1
+
+
 def find_object_and_field_ids(al_files: list[Path]) -> list[dict]:
     """Scans .al source for every object/field declaration with an explicit numeric ID."""
     declarations = []
@@ -85,20 +99,36 @@ def find_object_and_field_ids(al_files: list[Path]) -> list[dict]:
             continue
 
         for match in OBJECT_DECL_PATTERN.finditer(content):
+            object_kind = match.group(1).lower()
             declarations.append({
                 "file": f.name,
-                "kind": match.group(1).lower(),
+                "kind": object_kind,
                 "id": int(match.group(2)),
                 "name": match.group(3).strip(),
             })
 
-        for match in FIELD_DECL_PATTERN.finditer(content):
-            declarations.append({
-                "file": f.name,
-                "kind": "field",
-                "id": int(match.group(1)),
-                "name": match.group(2).strip(),
-            })
+            # Only field IDs declared in extension objects should be constrained
+            # by app.json idRanges. New table/page objects can use low sequential
+            # IDs for their internal fields.
+            if object_kind not in {"tableextension", "pageextension"}:
+                continue
+
+            block_start = content.find("{", match.end())
+            if block_start == -1:
+                continue
+
+            block_end = _find_matching_brace(content, block_start)
+            if block_end == -1:
+                continue
+
+            object_block = content[block_start:block_end + 1]
+            for field_match in FIELD_DECL_PATTERN.finditer(object_block):
+                declarations.append({
+                    "file": f.name,
+                    "kind": "field",
+                    "id": int(field_match.group(1)),
+                    "name": field_match.group(2).strip(),
+                })
 
     return declarations
 

@@ -3,10 +3,58 @@ import subprocess
 import json
 import re
 from pathlib import Path
+from dotenv import load_dotenv
+
+load_dotenv()
 
 AGY_PATH = os.getenv("AGY_PATH")
 
-def build_judge_prompt(requirements: str    , code_contents: dict, static_analysis: dict) -> str:
+# Windows CreateProcess has a hard ~32,767 character total command-line limit
+# (executable + all args combined). Passing every generated file's full
+# content as part of --print's argument can exceed this on larger, real
+# multi-object projects (it never showed up on small single-table jobs).
+# Leave generous headroom for the executable path, flags, and the prompt's
+# own scaffolding text.
+MAX_PROMPT_CHARS = 20000
+
+# When a project's total code exceeds the budget, prioritize files that
+# carry actual business logic — codeunits and tables — over UI-only files
+# like pages, which matter less for judging requirement fulfillment.
+PRIORITY_SUFFIXES = {".codeunit.al": 0, ".table.al": 0, ".al": 1, ".json": 2, ".md": 3}
+
+
+def _file_priority(filename: str) -> int:
+    lower = filename.lower()
+    for suffix, priority in PRIORITY_SUFFIXES.items():
+        if lower.endswith(suffix):
+            return priority
+    return 4
+
+
+def _budget_code_contents(code_contents: dict, max_chars: int) -> dict:
+    """Fits code_contents within max_chars total, keeping full content for
+    higher-priority files first and truncating or dropping lower-priority
+    ones as needed, rather than blindly cutting every file proportionally."""
+    ordered_names = sorted(code_contents.keys(), key=_file_priority)
+
+    budgeted = {}
+    remaining = max_chars
+    for name in ordered_names:
+        content = code_contents[name]
+        if remaining <= 0:
+            budgeted[name] = "[omitted — prompt size budget exhausted]"
+            continue
+        if len(content) <= remaining:
+            budgeted[name] = content
+            remaining -= len(content)
+        else:
+            budgeted[name] = content[:remaining] + f"\n[... truncated, {len(content) - remaining} more characters]"
+            remaining = 0
+
+    return budgeted
+
+
+def build_judge_prompt(requirements: str, code_contents: dict, static_analysis: dict) -> str:
     """Builds the judging prompt, including other evaluators' results as context."""
     code_section = "\n\n".join(
         f"--- {fname} ---\n{content}" for fname, content in code_contents.items()
@@ -48,6 +96,11 @@ def run_llm_judge(job_dir: Path, generated_files: list[Path], static_analysis: d
     if not code_contents:
         return {"status": "skipped", "reason": "no readable code files found"}
 
+    total_chars = sum(len(c) for c in code_contents.values())
+    was_budgeted = total_chars > MAX_PROMPT_CHARS
+    if was_budgeted:
+        code_contents = _budget_code_contents(code_contents, MAX_PROMPT_CHARS)
+
     prompt = build_judge_prompt(requirements_text, code_contents, static_analysis)
 
     try:
@@ -60,12 +113,23 @@ def run_llm_judge(job_dir: Path, generated_files: list[Path], static_analysis: d
         )
     except subprocess.TimeoutExpired:
         return {"status": "timeout", "error": f"judge call exceeded {timeout}s"}
-    except FileNotFoundError:
-        return {"status": "error", "error": "agy.exe not found — check AGY_PATH"}
+    except FileNotFoundError as e:
+        return {
+            "status": "error",
+            "error": str(e),
+            "agy_path": repr(AGY_PATH),
+        }
+    except OSError as e:
+        # Covers WinError 206 (filename/command-line too long) and similar
+        # OS-level failures that aren't a missing-file problem.
+        return {
+            "status": "error",
+            "error": f"OS error launching agy.exe: {e}",
+            "prompt_chars": len(prompt),
+        }
 
     raw_output = result.stdout.strip()
 
-    # Judge might wrap JSON in markdown fences or add stray text — extract the JSON block
     json_match = re.search(r"\{.*\}", raw_output, re.DOTALL)
     if not json_match:
         return {
@@ -85,5 +149,6 @@ def run_llm_judge(job_dir: Path, generated_files: list[Path], static_analysis: d
 
     return {
         "status": "success",
+        "prompt_was_truncated": was_budgeted,
         **judgment,
     }

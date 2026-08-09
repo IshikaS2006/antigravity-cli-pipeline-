@@ -21,6 +21,17 @@ QUIET_PERIOD = 90          # gap after generation is underway
 STARTUP_GRACE = 90       # was 30 — give to reason before its first write
 EVAL_SCRIPT = Path(__file__).resolve().parent / "run_eval.py"
 
+
+def classify_agy_failure(stderr_text: str | None) -> str | None:
+    if not stderr_text:
+        return None
+
+    lowered = stderr_text.lower()
+    if "quota reached" in lowered or "upgrade your subscription" in lowered:
+        return "quota_exceeded"
+
+    return None
+
 parser = argparse.ArgumentParser()
 parser.add_argument("--variant-id", default=None, help="Optional variant tag for batch runs")
 parser.add_argument("--requirements-file", default=None, help="Path to this job's requirements file")
@@ -165,7 +176,12 @@ if status == "success":
         print(f"[eval] failed: {eval_result.stderr}")
     metadata["eval_status"] = "completed" if eval_ok else "failed"
 else:
-    print(f"\nSkipping eval — job status is '{status}'.")
+    quota_failure = classify_agy_failure(stderr_data)
+    if quota_failure:
+        metadata["failure_reason"] = quota_failure
+        print(f"\nSkipping eval — generation failed due to {quota_failure}.")
+    else:
+        print(f"\nSkipping eval — job status is '{status}'.")
     metadata["eval_status"] = "skipped"
 
 (job_dir / "metadata.json").write_text(json.dumps(metadata, indent=2), encoding="utf-8")
