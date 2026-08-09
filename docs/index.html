@@ -2,20 +2,940 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Scorecard — job_20260808_140916_790339_antigravity</title>
-<link rel="stylesheet" href="scorecard.css">
+<style>
+:root {
+    --bg: #f6f7fb;
+    --panel: #ffffff;
+    --panel-soft: #f9fafc;
+    --border: #dbe2ea;
+    --text: #17212b;
+    --muted: #5f6b7a;
+    --shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+    --success: #1f7a3d;
+    --warning: #a16207;
+    --danger: #b42318;
+    --info: #2563eb;
+    --neutral: #475467;
+    --chip-bg: #edf2f7;
+}
+
+* { box-sizing: border-box; }
+
+html, body { margin: 0; padding: 0; }
+
+body {
+    background:
+        radial-gradient(circle at top left, rgba(37, 99, 235, 0.08), transparent 28%),
+        radial-gradient(circle at top right, rgba(31, 122, 61, 0.05), transparent 24%),
+        var(--bg);
+    color: var(--text);
+    font-family: Inter, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.5;
+}
+
+.container {
+    max-width: 1240px;
+    margin: 0 auto;
+    padding: 28px 20px 56px;
+}
+
+.hero {
+    background: linear-gradient(135deg, rgba(255,255,255,0.96), rgba(255,255,255,0.88));
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 24px 24px 20px;
+    box-shadow: var(--shadow);
+    margin-bottom: 20px;
+}
+
+.hero-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.title {
+    margin: 0;
+    font-size: clamp(24px, 3vw, 34px);
+    line-height: 1.15;
+    letter-spacing: -0.03em;
+}
+
+.subtitle {
+    margin-top: 8px;
+    color: var(--muted);
+    font-size: 14px;
+}
+
+.status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    border: 1px solid transparent;
+    white-space: nowrap;
+}
+
+.status-success { background: rgba(31, 122, 61, 0.1); color: var(--success); border-color: rgba(31, 122, 61, 0.18); }
+.status-warning { background: rgba(161, 98, 7, 0.1); color: var(--warning); border-color: rgba(161, 98, 7, 0.18); }
+.status-danger { background: rgba(180, 35, 24, 0.1); color: var(--danger); border-color: rgba(180, 35, 24, 0.18); }
+.status-info { background: rgba(37, 99, 235, 0.1); color: var(--info); border-color: rgba(37, 99, 235, 0.18); }
+.status-neutral { background: rgba(71, 84, 103, 0.08); color: var(--neutral); border-color: rgba(71, 84, 103, 0.16); }
+
+.meta-grid,
+.summary-grid,
+.metric-grid,
+.card-grid {
+    display: grid;
+    gap: 14px;
+}
+
+.meta-grid {
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    margin-top: 18px;
+}
+
+.metric-grid,
+.summary-grid,
+.card-grid {
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.meta-item,
+.summary-card,
+.metric-card,
+.panel,
+.error-panel,
+.raw-panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    box-shadow: var(--shadow);
+}
+
+.meta-item,
+.summary-card,
+.metric-card {
+    padding: 14px 16px;
+}
+
+.eyebrow {
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 8px;
+}
+
+.meta-value,
+.summary-value {
+    font-size: 16px;
+    font-weight: 700;
+    word-break: break-word;
+}
+
+.section {
+    margin-top: 18px;
+}
+
+.section h2 {
+    margin: 0 0 12px;
+    font-size: 18px;
+    letter-spacing: -0.02em;
+}
+
+.section-note {
+    color: var(--muted);
+    font-size: 13px;
+    margin: -6px 0 14px;
+}
+
+.panel,
+.error-panel,
+.raw-panel {
+    padding: 18px;
+}
+
+.panel + .panel,
+.panel + .error-panel,
+.error-panel + .panel,
+.error-panel + .error-panel {
+    margin-top: 14px;
+}
+
+.kv-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 10px;
+}
+
+.kv {
+    padding: 12px 14px;
+    background: var(--panel-soft);
+    border: 1px solid #e8edf3;
+    border-radius: 14px;
+}
+
+.kv .key {
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.kv .value {
+    margin-top: 6px;
+    font-size: 15px;
+    font-weight: 600;
+    word-break: break-word;
+}
+
+.table-wrap {
+    overflow-x: auto;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    background: #fff;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 620px;
+}
+
+th, td {
+    text-align: left;
+    padding: 12px 14px;
+    border-bottom: 1px solid #edf2f7;
+    vertical-align: top;
+}
+
+th {
+    background: #f8fafc;
+    color: var(--muted);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+tbody tr:hover {
+    background: #fcfdff;
+}
+
+.chip,
+.badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+    border: 1px solid transparent;
+    white-space: nowrap;
+}
+
+.badge-success { background: rgba(31, 122, 61, 0.1); color: var(--success); border-color: rgba(31, 122, 61, 0.18); }
+.badge-warning { background: rgba(161, 98, 7, 0.1); color: var(--warning); border-color: rgba(161, 98, 7, 0.18); }
+.badge-danger { background: rgba(180, 35, 24, 0.1); color: var(--danger); border-color: rgba(180, 35, 24, 0.18); }
+.badge-info { background: rgba(37, 99, 235, 0.1); color: var(--info); border-color: rgba(37, 99, 235, 0.18); }
+.badge-neutral { background: rgba(71, 84, 103, 0.08); color: var(--neutral); border-color: rgba(71, 84, 103, 0.16); }
+
+.section-summary {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 14px;
+}
+
+.muted {
+    color: var(--muted);
+}
+
+.empty {
+    color: var(--muted);
+    font-size: 13px;
+    font-style: italic;
+}
+
+.error-panel {
+    border-left: 5px solid var(--danger);
+    background: linear-gradient(180deg, rgba(180, 35, 24, 0.04), rgba(255, 255, 255, 1));
+}
+
+.error-title {
+    margin: 0 0 8px;
+    font-size: 16px;
+}
+
+.error-text {
+    margin: 0;
+    color: var(--text);
+}
+
+details {
+    margin-top: 12px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: #fff;
+    overflow: hidden;
+}
+
+details > summary {
+    cursor: pointer;
+    list-style: none;
+    padding: 12px 14px;
+    background: #fbfcfe;
+    color: var(--text);
+    font-weight: 700;
+}
+
+details > summary::-webkit-details-marker {
+    display: none;
+}
+
+.details-body {
+    padding: 14px;
+}
+
+.evidence-list,
+.problem-list {
+    margin: 0;
+    padding-left: 18px;
+}
+
+.evidence-list li + li,
+.problem-list li + li {
+    margin-top: 10px;
+}
+
+pre {
+    margin: 0;
+    padding: 12px 14px;
+    background: #0f172a;
+    color: #e2e8f0;
+    border-radius: 12px;
+    overflow-x: auto;
+    font-size: 12px;
+    line-height: 1.55;
+}
+
+code {
+    font-family: Consolas, "SFMono-Regular", Menlo, Monaco, "Liberation Mono", monospace;
+}
+
+.raw-panel pre {
+    max-height: 520px;
+}
+
+.metric-card .metric-title {
+    margin: 0 0 8px;
+    font-size: 14px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.metric-card .metric-main {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.metric-card .metric-value {
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+}
+
+.metric-card .metric-sub {
+    margin-top: 8px;
+    color: var(--muted);
+    font-size: 13px;
+}
+
+.roles-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 12px;
+}
+
+.role-card {
+    padding: 14px;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    background: var(--panel-soft);
+}
+
+.role-card h3 {
+    margin: 0 0 8px;
+    font-size: 15px;
+}
+
+.role-lines {
+    display: grid;
+    gap: 6px;
+    font-size: 13px;
+}
+
+.role-lines span {
+    color: var(--muted);
+}
+
+@media (max-width: 720px) {
+    .container { padding: 18px 12px 40px; }
+    .hero { padding: 18px 16px 16px; border-radius: 16px; }
+    .section h2 { font-size: 17px; }
+    table { min-width: 540px; }
+}
+</style>
 </head>
 <body>
-  <h1>job_20260808_140916_790339_antigravity
-    <span class="status-pill status-success">success</span>
-  </h1>
-  <div class="meta">Agent: antigravity · Duration: 204.32s · Evaluated: 2026-08-09T23:24:53.520408</div>
+    <div class="container">
+        <header class="hero">
+            <div class="hero-top">
+                <div>
+                    <h1 class="title">job_20260808_140916_790339_antigravity</h1>
+                    <div class="subtitle">Evaluation report for antigravity</div>
+                </div>
+                <span class="status-pill status-success">✓ Success</span>
+            </div>
 
-  <div class="card"><h2>Static Analysis</h2><div class="row"><span class="label">Score</span><span>5.3</span></div><div class="row"><span class="label">Compiled clean</span><span>True</span></div><div class="row"><span class="label">Total issues</span><span>11</span></div><div class="row"><span class="label"><span style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;text-transform:uppercase;color:#fff;background:#2b6cb0;margin-right:6px;">info</span>HotelRoomCard.Page.al:3 [AW0006]</span><span>The page 'Hotel Room Card' should use the UsageCategory and ApplicationArea properties to be searchable.</span></div><div class="row"><span class="label"><span style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;text-transform:uppercase;color:#fff;background:#2b6cb0;margin-right:6px;">info</span>HotelReservationCard.Page.al:3 [AW0006]</span><span>The page 'Hotel Reservation Card' should use the UsageCategory and ApplicationArea properties to be searchable.</span></div><div class="row"><span class="label"><span style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;text-transform:uppercase;color:#fff;background:#b7791f;margin-right:6px;">warning</span>HotelManagement.Codeunit.al:14 [AA0005]</span><span>Only use BEGIN..END to enclose compound statements.</span></div><div class="row"><span class="label"><span style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;text-transform:uppercase;color:#fff;background:#b7791f;margin-right:6px;">warning</span>HotelManagement.Codeunit.al:28 [AA0005]</span><span>Only use BEGIN..END to enclose compound statements.</span></div><div class="row"><span class="label"><span style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;text-transform:uppercase;color:#fff;background:#b7791f;margin-right:6px;">warning</span>HotelLifecycleTests.Codeunit.al:96 [AA0137]</span><span>Variable 'Reservation2' is unused in 'TestOverbookingPrevention'.</span></div><div class="row"><span class="label"><span style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;text-transform:uppercase;color:#fff;background:#b7791f;margin-right:6px;">warning</span>HotelLifecycleTests.Codeunit.al:128 [AA0206]</span><span>The variable 'PaymentErrorOccurred' is initialized but not used.</span></div><div class="row"><span class="label"><span style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;text-transform:uppercase;color:#fff;background:#b7791f;margin-right:6px;">warning</span>HotelManagement.Codeunit.al:74 [AA0005]</span><span>Only use BEGIN..END to enclose compound statements.</span></div><div class="row"><span class="label"><span style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;text-transform:uppercase;color:#fff;background:#b7791f;margin-right:6px;">warning</span>HotelLifecycleTests.Codeunit.al:66 [AA0206]</span><span>The variable 'InvNo' is initialized but not used.</span></div><div class="row"><span class="label"><span style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;text-transform:uppercase;color:#fff;background:#b7791f;margin-right:6px;">warning</span>HotelManagement.Codeunit.al:198 [AA0005]</span><span>Only use BEGIN..END to enclose compound statements.</span></div><div class="row"><span class="label"><span style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;text-transform:uppercase;color:#fff;background:#b7791f;margin-right:6px;">warning</span>HotelManagement.Codeunit.al:285 [AA0139]</span><span>Possible overflow assigning 'Text' to 'Code[50]'.</span></div><div class="row"><span class="label"><span style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;text-transform:uppercase;color:#fff;background:#b7791f;margin-right:6px;">warning</span>HotelManagement.Codeunit.al:218 [AA0139]</span><span>Possible overflow assigning 'Text' to 'Code[20]'.</span></div></div>
-    <div class="card"><h2>Object Contract</h2><div class="row"><span class="label">Passed</span><span>True</span></div><div class="row"><span class="label">Objects checked</span><span>17</span></div><div class="row"><span class="label">Declared id ranges</span><span>[{"from": 50100, "to": 50149}]</span></div></div>
-    <div class="card"><h2>Security Permissions</h2><div class="row"><span class="label">Passed</span><span>True</span></div><div class="row"><span class="label">Permission sets found</span><span>3</span></div><div class="row"><span class="label">Missing roles</span><span>None</span></div><div class="row"><span class="label">Violations</span><span>None</span></div><div class="row"><span class="label">Front Desk set</span><span>Hotel Front Desk</span></div><div class="row"><span class="label">Front Desk refund permissions</span><span>[]</span></div><div class="row"><span class="label">Finance set</span><span>Hotel Finance</span></div><div class="row"><span class="label">Finance refund permissions</span><span>[]</span></div></div>
-    <div class="card"><h2>Negative Cases</h2><div class="row"><span class="label">Passed</span><span>True</span></div><div class="row"><span class="label">Failed checks</span><span>None</span></div><div class="row"><span class="label">overbooking_rejected passed</span><span>True</span></div><div class="row"><span class="label">overbooking_rejected evidence</span><span>["Conflict concept found: n\n        if checkout <= checkin then\n            error('check-out date must be after check-in date.');\n\n        if roomno <> '' then begin\n            if checkoverbooking(roomno, checkin, checkout, resno) then\n                error('overbooking: room %1 is already reserved for the period %2 to %3.', roomno, checkin, checkout)", "Conflict rejection via Error() found near guard condition: n\n        if checkout <= checkin then\n            error('check-out date must be after check-in date.');\n\n        if roomno <> '' then begin\n            if checkoverbooking(roomno, checkin, checkout, resno) then\n                error('overbooking: room %1 is already reserved for the period %2 to %3.', roomno, checkin, checkout);\n        end;\n\n        reservation.init();\n        reservation.\""]</span></div><div class="row"><span class="label">failed_payment_not_marked_captured passed</span><span>True</span></div><div class="row"><span class="label">failed_payment_not_marked_captured evidence</span><span>["Payment failure branch found: (false);\n    end;\n\n    procedure capturedeposit(var reservation: record \"hotel reservation header\"; amount: decimal; paymentsuccess: boolean)\n    begin\n        if not paymentsuccess then begin\n            reservation.\"deposit captured\" := false;\n            reservation.modify(true);\n            error('deposit payment failed for reservation %1.'", "Deposit capture rollback found: vation: record \"hotel reservation header\"; amount: decimal; paymentsuccess: boolean)\n    begin\n        if not paymentsuccess then begin\n            reservation.\"deposit captured\" := false;\n            reservation.modify(true);\n            error('deposit payment failed for reservation %1.', reservation.\"reservation no.\");\n        end;\n\n        if", "Payment failure rejection via Error() found: (false);\n    end;\n\n    procedure capturedeposit(var reservation: record \"hotel reservation header\"; amount: decimal; paymentsuccess: boolean)\n    begin\n        if not paymentsuccess then begin\n            reservation.\"deposit captured\" := false;\n            reservation.modify(true);\n            error('deposit payment failed for reservation %1.', reservation.\"reservation no.\");\n        end;\n\n        if amount <= 0 then\n            error('deposit amount must b"]</span></div><div class="row"><span class="label">duplicate_invoice_rejected passed</span><span>True</span></div><div class="row"><span class="label">duplicate_invoice_rejected evidence</span><span>["Duplicate invoice guard found: if userrole = enum::\"hotel user role\"::frontdesk then\n            error('unauthorized: front desk role cannot generate invoices.');\n\n        if reservation.invoiced then\n            error('invoice %1 has already been generated for reservation %2.', reservation.\"invoice no.\", reservation.\"reservation no.\");\n\n        calcula", "Duplicate invoice rejection via Error() found: if userrole = enum::\"hotel user role\"::frontdesk then\n            error('unauthorized: front desk role cannot generate invoices.');\n\n        if reservation.invoiced then\n            error('invoice %1 has already been generated for reservation %2.', reservation.\"invoice no.\", reservation.\"reservation no.\");\n\n        calculatevat(reservation);"]</span></div><div class="row"><span class="label">unauthorized_refund_rejected passed</span><span>True</span></div><div class="row"><span class="label">unauthorized_refund_rejected evidence</span><span>["Refund flow found: odify(true);\n\n        createledgerentry(reservation, optionentrytype::finalpayment, amount, 'final payment received', reservation.\"invoice no.\");\n    end;\n\n    procedure processrefund(var reservation: record \"hotel reservation header\"; refundamount: decimal; userrole: enum \"hotel user role\")\n    var\n        hotelsetup: record \"hotel setup\";", "Inline role check with rejection found in ProcessRefund: le\")\n    var\n        hotelsetup: record \"hotel setup\";\n    begin\n        hotelsetup.getsetup();\n\n        if (userrole = enum::\"hotel user role\"::frontdesk) and (not hotelsetup.\"allow frontdesk refund\") then\n            error('unauthorized: front desk users are not permitted to process refunds.');\n\n        if refundamount <= 0 then"]</span></div></div>
-  <div class="card"><h2>LLM Judge</h2><div class="row"><span class="label">status</span><span>error</span></div><div class="row"><span class="label">error</span><span>could not find JSON in judge response</span></div><div class="row"><span class="label">raw_output</span><span></span></div></div>
+            <div class="meta-grid">
+                <div class="meta-item">
+                    <div class="eyebrow">Agent</div>
+                    <div class="meta-value">antigravity</div>
+                </div>
+                <div class="meta-item">
+                    <div class="eyebrow">Execution Status</div>
+                    <div class="meta-value">✓ Success</div>
+                </div>
+                <div class="meta-item">
+                    <div class="eyebrow">Duration</div>
+                    <div class="meta-value">204.32 s</div>
+                </div>
+                <div class="meta-item">
+                    <div class="eyebrow">Evaluated</div>
+                    <div class="meta-value">2026-08-09T23:48:23.652208</div>
+                </div>
+            </div>
+        </header>
 
+        <section class="section">
+            <h2>Overall Summary</h2>
+            <div class="summary-grid">
+                <div class="summary-card"><div class="eyebrow">Static Analysis</div><div class="summary-value">5.3 / 10</div><div class="section-summary"><span class="badge badge-info">info</span></div><div class="muted">11 findings</div></div><div class="summary-card"><div class="eyebrow">Object Contract</div><div class="summary-value">✓ Passed</div><div class="section-summary"><span class="badge badge-success">✓ Success</span></div><div class="muted">17 objects checked</div></div><div class="summary-card"><div class="eyebrow">Security Permissions</div><div class="summary-value">✓ Passed</div><div class="section-summary"><span class="badge badge-success">✓ Success</span></div><div class="muted">3 permission sets</div></div><div class="summary-card"><div class="eyebrow">Negative Cases</div><div class="summary-value">✓ Passed</div><div class="section-summary"><span class="badge badge-success">✓ Success</span></div><div class="muted">4 / 4 checks passed</div></div><div class="summary-card"><div class="eyebrow">LLM Judge</div><div class="summary-value">Error</div><div class="section-summary"><span class="badge badge-danger">danger</span></div><div class="muted">could not find JSON in judge response</div></div>
+            </div>
+        </section>
+
+        <section class="section">
+            <h2>Static Analysis</h2>
+            <div class="section-note">Analyzer findings are grouped by severity and shown as a table.</div>
+            <div class="panel"><div class="kv-grid"><div class="kv"><div class="key">Score</div><div class="value">5.3</div></div><div class="kv"><div class="key">Compiled clean</div><div class="value">✓ Yes</div></div><div class="kv"><div class="key">Total issues</div><div class="value">11</div></div><div class="kv"><div class="key">Errors</div><div class="value">0</div></div><div class="kv"><div class="key">Warnings</div><div class="value">9</div></div><div class="kv"><div class="key">Info</div><div class="value">2</div></div></div><div class="table-wrap"><table><thead><tr><th>Severity</th><th>File</th><th>Line</th><th>Rule</th><th>Message</th></tr></thead><tbody><tr><td><span class="badge badge-neutral">INFO</span></td><td>HotelRoomCard.Page.al</td><td>3</td><td>AW0006</td><td>The page &#x27;Hotel Room Card&#x27; should use the UsageCategory and ApplicationArea properties to be searchable.</td></tr><tr><td><span class="badge badge-neutral">INFO</span></td><td>HotelReservationCard.Page.al</td><td>3</td><td>AW0006</td><td>The page &#x27;Hotel Reservation Card&#x27; should use the UsageCategory and ApplicationArea properties to be searchable.</td></tr><tr><td><span class="badge badge-warning">WARNING</span></td><td>HotelManagement.Codeunit.al</td><td>14</td><td>AA0005</td><td>Only use BEGIN..END to enclose compound statements.</td></tr><tr><td><span class="badge badge-warning">WARNING</span></td><td>HotelManagement.Codeunit.al</td><td>28</td><td>AA0005</td><td>Only use BEGIN..END to enclose compound statements.</td></tr><tr><td><span class="badge badge-warning">WARNING</span></td><td>HotelLifecycleTests.Codeunit.al</td><td>96</td><td>AA0137</td><td>Variable &#x27;Reservation2&#x27; is unused in &#x27;TestOverbookingPrevention&#x27;.</td></tr><tr><td><span class="badge badge-warning">WARNING</span></td><td>HotelLifecycleTests.Codeunit.al</td><td>128</td><td>AA0206</td><td>The variable &#x27;PaymentErrorOccurred&#x27; is initialized but not used.</td></tr><tr><td><span class="badge badge-warning">WARNING</span></td><td>HotelManagement.Codeunit.al</td><td>74</td><td>AA0005</td><td>Only use BEGIN..END to enclose compound statements.</td></tr><tr><td><span class="badge badge-warning">WARNING</span></td><td>HotelLifecycleTests.Codeunit.al</td><td>66</td><td>AA0206</td><td>The variable &#x27;InvNo&#x27; is initialized but not used.</td></tr><tr><td><span class="badge badge-warning">WARNING</span></td><td>HotelManagement.Codeunit.al</td><td>198</td><td>AA0005</td><td>Only use BEGIN..END to enclose compound statements.</td></tr><tr><td><span class="badge badge-warning">WARNING</span></td><td>HotelManagement.Codeunit.al</td><td>285</td><td>AA0139</td><td>Possible overflow assigning &#x27;Text&#x27; to &#x27;Code[50]&#x27;.</td></tr><tr><td><span class="badge badge-warning">WARNING</span></td><td>HotelManagement.Codeunit.al</td><td>218</td><td>AA0139</td><td>Possible overflow assigning &#x27;Text&#x27; to &#x27;Code[20]&#x27;.</td></tr></tbody></table></div></div>
+        </section>
+
+        <section class="section">
+            <h2>Object Contract</h2>
+            <div class="section-note">Manifest checks, declared objects, and ID range validation.</div>
+            <div class="panel"><div class="kv-grid"><div class="kv"><div class="key">Passed</div><div class="value">✓ Yes</div></div><div class="kv"><div class="key">Objects checked</div><div class="value">17</div></div><div class="kv"><div class="key">Declared ID ranges</div><div class="value">1</div></div><div class="kv"><div class="key">Structural problems</div><div class="value">0</div></div><div class="kv"><div class="key">Out-of-range declarations</div><div class="value">0</div></div></div><details><summary>Declared ID ranges</summary><div class="details-body"><pre><code>[
+  {
+    &quot;from&quot;: 50100,
+    &quot;to&quot;: 50149
+  }
+]</code></pre></div></details><details><summary>All declarations (17)</summary><div class="details-body"><div class="table-wrap"><table><thead><tr><th>Kind</th><th>ID</th><th>Name</th><th>File</th></tr></thead><tbody><tr><td>codeunit</td><td>50101</td><td>Hotel Lifecycle Tests</td><td>HotelLifecycleTests.Codeunit.al</td></tr><tr><td>codeunit</td><td>50100</td><td>Hotel Management</td><td>HotelManagement.Codeunit.al</td></tr><tr><td>enum</td><td>50100</td><td>Hotel Reservation Status</td><td>HotelReservationStatus.Enum.al</td></tr><tr><td>enum</td><td>50101</td><td>Hotel Service Type</td><td>HotelServiceType.Enum.al</td></tr><tr><td>enum</td><td>50102</td><td>Hotel User Role</td><td>HotelUserRole.Enum.al</td></tr><tr><td>page</td><td>50106</td><td>Hotel Ledger Entries</td><td>HotelLedgerEntries.Page.al</td></tr><tr><td>page</td><td>50104</td><td>Hotel Reservation Card</td><td>HotelReservationCard.Page.al</td></tr><tr><td>page</td><td>50103</td><td>Hotel Reservation List</td><td>HotelReservationList.Page.al</td></tr><tr><td>page</td><td>50102</td><td>Hotel Room Card</td><td>HotelRoomCard.Page.al</td></tr><tr><td>page</td><td>50101</td><td>Hotel Room List</td><td>HotelRoomList.Page.al</td></tr><tr><td>page</td><td>50105</td><td>Hotel Service Charge Subform</td><td>HotelServiceChargeSubform.Page.al</td></tr><tr><td>page</td><td>50100</td><td>Hotel Setup</td><td>HotelSetup.Page.al</td></tr><tr><td>table</td><td>50104</td><td>Hotel Ledger Entry</td><td>HotelLedgerEntry.Table.al</td></tr><tr><td>table</td><td>50102</td><td>Hotel Reservation Header</td><td>HotelReservationHeader.Table.al</td></tr><tr><td>table</td><td>50101</td><td>Hotel Room</td><td>HotelRoom.Table.al</td></tr><tr><td>table</td><td>50103</td><td>Hotel Service Charge Line</td><td>HotelServiceChargeLine.Table.al</td></tr><tr><td>table</td><td>50100</td><td>Hotel Setup</td><td>HotelSetup.Table.al</td></tr></tbody></table></div></div></details></div>
+        </section>
+
+        <section class="section">
+            <h2>Security Permissions</h2>
+            <div class="section-note">Permission-set coverage and refund authorization visibility.</div>
+            <div class="panel"><div class="kv-grid"><div class="kv"><div class="key">Passed</div><div class="value">✓ Yes</div></div><div class="kv"><div class="key">Permission sets found</div><div class="value">3</div></div><div class="kv"><div class="key">Missing roles</div><div class="value">0</div></div><div class="kv"><div class="key">Violations</div><div class="value">0</div></div></div><div class="section-summary"><span class="badge badge-success">No missing roles</span><span class="badge badge-success">No violations</span></div><div class="roles-grid"><div class="role-card"><h3>Front Desk</h3><div class="role-lines"><div><span>Name:</span> Hotel Front Desk</div><div><span>File:</span> HotelFrontDesk.PermissionSet.al</div><div><span>Refund permissions:</span> 0</div></div></div><div class="role-card"><h3>Finance</h3><div class="role-lines"><div><span>Name:</span> Hotel Finance</div><div><span>File:</span> HotelFinance.PermissionSet.al</div><div><span>Refund permissions:</span> 0</div></div></div><div class="role-card"><h3>Admin</h3><div class="role-lines"><div><span>Name:</span> Hotel Admin</div><div><span>File:</span> HotelAdmin.PermissionSet.al</div><div><span>Refund permissions:</span> 0</div></div></div></div></div>
+        </section>
+
+        <section class="section">
+            <h2>Negative Cases</h2>
+            <div class="section-note">Each evaluator check is rendered dynamically with collapsed evidence.</div>
+            <div class="panel"><div class="kv-grid"><div class="kv"><div class="key">Passed</div><div class="value">✓ Yes</div></div><div class="kv"><div class="key">Checks passed</div><div class="value">4 / 4</div></div><div class="kv"><div class="key">Failed checks</div><div class="value">0</div></div></div><div class="section-summary"><span class="badge badge-success">No failed checks</span></div><div class="card-grid"><div class="role-card"><h3>overbooking rejected</h3><div class="section-summary"><span class="badge badge-success">Passed</span></div><details><summary>Evidence (2)</summary><div class="details-body"><ul class="evidence-list"><li><pre><code>Conflict concept found: n
+        if checkout &lt;= checkin then
+            error(&#x27;check-out date must be after check-in date.&#x27;);
+
+        if roomno &lt;&gt; &#x27;&#x27; then begin
+            if checkoverbooking(roomno, checkin, checkout, resno) then
+                error(&#x27;overbooking: room %1 is already reserved for the period %2 to %3.&#x27;, roomno, checkin, checkout)</code></pre></li><li><pre><code>Conflict rejection via Error() found near guard condition: n
+        if checkout &lt;= checkin then
+            error(&#x27;check-out date must be after check-in date.&#x27;);
+
+        if roomno &lt;&gt; &#x27;&#x27; then begin
+            if checkoverbooking(roomno, checkin, checkout, resno) then
+                error(&#x27;overbooking: room %1 is already reserved for the period %2 to %3.&#x27;, roomno, checkin, checkout);
+        end;
+
+        reservation.init();
+        reservation.&quot;</code></pre></li></ul></div></details></div><div class="role-card"><h3>failed payment not marked captured</h3><div class="section-summary"><span class="badge badge-success">Passed</span></div><details><summary>Evidence (3)</summary><div class="details-body"><ul class="evidence-list"><li><pre><code>Payment failure branch found: (false);
+    end;
+
+    procedure capturedeposit(var reservation: record &quot;hotel reservation header&quot;; amount: decimal; paymentsuccess: boolean)
+    begin
+        if not paymentsuccess then begin
+            reservation.&quot;deposit captured&quot; := false;
+            reservation.modify(true);
+            error(&#x27;deposit payment failed for reservation %1.&#x27;</code></pre></li><li><pre><code>Deposit capture rollback found: vation: record &quot;hotel reservation header&quot;; amount: decimal; paymentsuccess: boolean)
+    begin
+        if not paymentsuccess then begin
+            reservation.&quot;deposit captured&quot; := false;
+            reservation.modify(true);
+            error(&#x27;deposit payment failed for reservation %1.&#x27;, reservation.&quot;reservation no.&quot;);
+        end;
+
+        if</code></pre></li><li><pre><code>Payment failure rejection via Error() found: (false);
+    end;
+
+    procedure capturedeposit(var reservation: record &quot;hotel reservation header&quot;; amount: decimal; paymentsuccess: boolean)
+    begin
+        if not paymentsuccess then begin
+            reservation.&quot;deposit captured&quot; := false;
+            reservation.modify(true);
+            error(&#x27;deposit payment failed for reservation %1.&#x27;, reservation.&quot;reservation no.&quot;);
+        end;
+
+        if amount &lt;= 0 then
+            error(&#x27;deposit amount must b</code></pre></li></ul></div></details></div><div class="role-card"><h3>duplicate invoice rejected</h3><div class="section-summary"><span class="badge badge-success">Passed</span></div><details><summary>Evidence (2)</summary><div class="details-body"><ul class="evidence-list"><li><pre><code>Duplicate invoice guard found: if userrole = enum::&quot;hotel user role&quot;::frontdesk then
+            error(&#x27;unauthorized: front desk role cannot generate invoices.&#x27;);
+
+        if reservation.invoiced then
+            error(&#x27;invoice %1 has already been generated for reservation %2.&#x27;, reservation.&quot;invoice no.&quot;, reservation.&quot;reservation no.&quot;);
+
+        calcula</code></pre></li><li><pre><code>Duplicate invoice rejection via Error() found: if userrole = enum::&quot;hotel user role&quot;::frontdesk then
+            error(&#x27;unauthorized: front desk role cannot generate invoices.&#x27;);
+
+        if reservation.invoiced then
+            error(&#x27;invoice %1 has already been generated for reservation %2.&#x27;, reservation.&quot;invoice no.&quot;, reservation.&quot;reservation no.&quot;);
+
+        calculatevat(reservation);</code></pre></li></ul></div></details></div><div class="role-card"><h3>unauthorized refund rejected</h3><div class="section-summary"><span class="badge badge-success">Passed</span></div><details><summary>Evidence (2)</summary><div class="details-body"><ul class="evidence-list"><li><pre><code>Refund flow found: odify(true);
+
+        createledgerentry(reservation, optionentrytype::finalpayment, amount, &#x27;final payment received&#x27;, reservation.&quot;invoice no.&quot;);
+    end;
+
+    procedure processrefund(var reservation: record &quot;hotel reservation header&quot;; refundamount: decimal; userrole: enum &quot;hotel user role&quot;)
+    var
+        hotelsetup: record &quot;hotel setup&quot;;</code></pre></li><li><pre><code>Inline role check with rejection found in ProcessRefund: le&quot;)
+    var
+        hotelsetup: record &quot;hotel setup&quot;;
+    begin
+        hotelsetup.getsetup();
+
+        if (userrole = enum::&quot;hotel user role&quot;::frontdesk) and (not hotelsetup.&quot;allow frontdesk refund&quot;) then
+            error(&#x27;unauthorized: front desk users are not permitted to process refunds.&#x27;);
+
+        if refundamount &lt;= 0 then</code></pre></li></ul></div></details></div></div></div>
+        </section>
+
+        <section class="section">
+            <h2>LLM Judge</h2>
+            <div class="section-note">Judge output, errors, and raw response diagnostics.</div>
+            <div class="error-panel"><div class="kv-grid"><div class="kv"><div class="key">Status</div><div class="value">✕ Failed</div></div><div class="kv"><div class="key">Error</div><div class="value">could not find JSON in judge response</div></div></div><details open><summary>Raw output</summary><div class="details-body"><pre><code></code></pre></div></details></div>
+        </section>
+
+        <section class="section">
+            <details>
+                <summary>Raw JSON</summary>
+                <div class="details-body raw-panel">
+                    <pre><code>{
+  &quot;job_id&quot;: &quot;job_20260808_140916_790339_antigravity&quot;,
+  &quot;agent_name&quot;: &quot;antigravity&quot;,
+  &quot;variant_id&quot;: null,
+  &quot;generation_status&quot;: &quot;success&quot;,
+  &quot;generation_duration_seconds&quot;: 204.32,
+  &quot;evaluated_at&quot;: &quot;2026-08-09T23:48:23.652208&quot;,
+  &quot;metrics&quot;: {
+    &quot;al_compile&quot;: {
+      &quot;project_dir&quot;: &quot;D:\\college\\own\\i1\\antigravity-pipeline\\jobs\\job_20260808_140916_790339_antigravity\\generated&quot;,
+      &quot;symbols_dir&quot;: &quot;D:\\bcsym\\generated&quot;,
+      &quot;dependency_patch&quot;: {
+        &quot;patched&quot;: false,
+        &quot;added&quot;: [],
+        &quot;reason&quot;: &quot;no known test-library codeunits referenced&quot;
+      },
+      &quot;namespace_patch&quot;: {
+        &quot;patched&quot;: false,
+        &quot;files_touched&quot;: [],
+        &quot;namespace&quot;: &quot;HotelOps.HotelReservationLifecycle&quot;
+      },
+      &quot;download&quot;: {
+        &quot;success&quot;: true,
+        &quot;logs&quot;: [
+          {
+            &quot;package&quot;: &quot;Microsoft.Application.symbols&quot;,
+            &quot;requested_version&quot;: &quot;24.0.0.0&quot;,
+            &quot;resolved_version&quot;: &quot;24.0.16410.31330&quot;,
+            &quot;returncode&quot;: 0,
+            &quot;stdout&quot;: &quot;Feeds used:\n  C:\\Users\\Lenovo\\.nuget\\packages\\\n  https://dynamicssmb2.pkgs.visualstudio.com/DynamicsBCPublicFeeds/_packaging/MSSymbols/nuget/v3/index.json\n\nPackage \&quot;Microsoft.Application.symbols.24.0.16410.31330\&quot; is already installed.\n&quot;,
+            &quot;stderr&quot;: &quot;&quot;
+          },
+          {
+            &quot;package&quot;: &quot;Microsoft.Platform.symbols&quot;,
+            &quot;requested_version&quot;: &quot;24.0.0.0&quot;,
+            &quot;resolved_version&quot;: &quot;24.0.36005&quot;,
+            &quot;returncode&quot;: 0,
+            &quot;stdout&quot;: &quot;Feeds used:\n  C:\\Users\\Lenovo\\.nuget\\packages\\\n  https://dynamicssmb2.pkgs.visualstudio.com/DynamicsBCPublicFeeds/_packaging/MSSymbols/nuget/v3/index.json\n\nPackage \&quot;Microsoft.Platform.symbols.24.0.36005\&quot; is already installed.\n&quot;,
+            &quot;stderr&quot;: &quot;&quot;
+          },
+          {
+            &quot;package&quot;: &quot;Microsoft.LibraryAssert.symbols.dd0be2ea-f733-4d65-bb34-a28f4624fb14&quot;,
+            &quot;requested_version&quot;: &quot;24.0.0.0&quot;,
+            &quot;resolved_version&quot;: &quot;24.0.16410.31330&quot;,
+            &quot;returncode&quot;: 0,
+            &quot;stdout&quot;: &quot;Feeds used:\n  C:\\Users\\Lenovo\\.nuget\\packages\\\n  https://dynamicssmb2.pkgs.visualstudio.com/DynamicsBCPublicFeeds/_packaging/MSSymbols/nuget/v3/index.json\n\nPackage \&quot;Microsoft.LibraryAssert.symbols.dd0be2ea-f733-4d65-bb34-a28f4624fb14.24.0.16410.31330\&quot; is already installed.\n&quot;,
+            &quot;stderr&quot;: &quot;&quot;
+          },
+          {
+            &quot;package&quot;: &quot;Microsoft.Tests-TestLibraries.symbols.5d86850b-0d76-4eca-bd7b-951ad998e997&quot;,
+            &quot;requested_version&quot;: &quot;24.0.0.0&quot;,
+            &quot;resolved_version&quot;: &quot;24.0.16410.31330&quot;,
+            &quot;returncode&quot;: 0,
+            &quot;stdout&quot;: &quot;Feeds used:\n  C:\\Users\\Lenovo\\.nuget\\packages\\\n  https://dynamicssmb2.pkgs.visualstudio.com/DynamicsBCPublicFeeds/_packaging/MSSymbols/nuget/v3/index.json\n\nPackage \&quot;Microsoft.Tests-TestLibraries.symbols.5d86850b-0d76-4eca-bd7b-951ad998e997.24.0.16410.31330\&quot; is already installed.\n&quot;,
+            &quot;stderr&quot;: &quot;&quot;
+          }
+        ],
+        &quot;symbols_dir&quot;: &quot;D:\\bcsym\\generated&quot;,
+        &quot;test_symbols_requested&quot;: true
+      },
+      &quot;compile&quot;: {
+        &quot;success&quot;: true,
+        &quot;stdout&quot;: &quot;Microsoft (R) AL Compiler version 17.0.34.45391\nCopyright (C) Microsoft Corporation. All rights reserved\n\nCompilation started for project &#x27;Hotel Reservation Lifecycle&#x27; containing &#x27;20&#x27; files at &#x27;23:47:53.984&#x27;.\n\n\nCompilation ended at &#x27;23:48:00.196&#x27;.\n\n&quot;,
+        &quot;stderr&quot;: &quot;&quot;,
+        &quot;out_file&quot;: &quot;D:\\college\\own\\i1\\antigravity-pipeline\\jobs\\job_20260808_140916_790339_antigravity\\generated\\generated.app&quot;,
+        &quot;returncode&quot;: 0
+      },
+      &quot;success&quot;: true
+    },
+    &quot;static_analysis&quot;: {
+      &quot;status&quot;: &quot;success&quot;,
+      &quot;compiled_clean&quot;: true,
+      &quot;analyzers_used&quot;: [
+        &quot;Microsoft.Dynamics.Nav.CodeCop&quot;,
+        &quot;Microsoft.Dynamics.Nav.UICop&quot;,
+        &quot;Microsoft.Dynamics.Nav.PerTenantExtensionCop&quot;
+      ],
+      &quot;score&quot;: 5.3,
+      &quot;issue_counts&quot;: {
+        &quot;error&quot;: 0,
+        &quot;warning&quot;: 9,
+        &quot;info&quot;: 2
+      },
+      &quot;total_issues&quot;: 11,
+      &quot;issues&quot;: [
+        {
+          &quot;file&quot;: &quot;HotelRoomCard.Page.al&quot;,
+          &quot;line&quot;: 3,
+          &quot;severity&quot;: &quot;info&quot;,
+          &quot;code&quot;: &quot;AW0006&quot;,
+          &quot;source&quot;: &quot;UICop&quot;,
+          &quot;message&quot;: &quot;The page &#x27;Hotel Room Card&#x27; should use the UsageCategory and ApplicationArea properties to be searchable.&quot;
+        },
+        {
+          &quot;file&quot;: &quot;HotelReservationCard.Page.al&quot;,
+          &quot;line&quot;: 3,
+          &quot;severity&quot;: &quot;info&quot;,
+          &quot;code&quot;: &quot;AW0006&quot;,
+          &quot;source&quot;: &quot;UICop&quot;,
+          &quot;message&quot;: &quot;The page &#x27;Hotel Reservation Card&#x27; should use the UsageCategory and ApplicationArea properties to be searchable.&quot;
+        },
+        {
+          &quot;file&quot;: &quot;HotelManagement.Codeunit.al&quot;,
+          &quot;line&quot;: 14,
+          &quot;severity&quot;: &quot;warning&quot;,
+          &quot;code&quot;: &quot;AA0005&quot;,
+          &quot;source&quot;: &quot;CodeCop&quot;,
+          &quot;message&quot;: &quot;Only use BEGIN..END to enclose compound statements.&quot;
+        },
+        {
+          &quot;file&quot;: &quot;HotelManagement.Codeunit.al&quot;,
+          &quot;line&quot;: 28,
+          &quot;severity&quot;: &quot;warning&quot;,
+          &quot;code&quot;: &quot;AA0005&quot;,
+          &quot;source&quot;: &quot;CodeCop&quot;,
+          &quot;message&quot;: &quot;Only use BEGIN..END to enclose compound statements.&quot;
+        },
+        {
+          &quot;file&quot;: &quot;HotelLifecycleTests.Codeunit.al&quot;,
+          &quot;line&quot;: 96,
+          &quot;severity&quot;: &quot;warning&quot;,
+          &quot;code&quot;: &quot;AA0137&quot;,
+          &quot;source&quot;: &quot;CodeCop&quot;,
+          &quot;message&quot;: &quot;Variable &#x27;Reservation2&#x27; is unused in &#x27;TestOverbookingPrevention&#x27;.&quot;
+        },
+        {
+          &quot;file&quot;: &quot;HotelLifecycleTests.Codeunit.al&quot;,
+          &quot;line&quot;: 128,
+          &quot;severity&quot;: &quot;warning&quot;,
+          &quot;code&quot;: &quot;AA0206&quot;,
+          &quot;source&quot;: &quot;CodeCop&quot;,
+          &quot;message&quot;: &quot;The variable &#x27;PaymentErrorOccurred&#x27; is initialized but not used.&quot;
+        },
+        {
+          &quot;file&quot;: &quot;HotelManagement.Codeunit.al&quot;,
+          &quot;line&quot;: 74,
+          &quot;severity&quot;: &quot;warning&quot;,
+          &quot;code&quot;: &quot;AA0005&quot;,
+          &quot;source&quot;: &quot;CodeCop&quot;,
+          &quot;message&quot;: &quot;Only use BEGIN..END to enclose compound statements.&quot;
+        },
+        {
+          &quot;file&quot;: &quot;HotelLifecycleTests.Codeunit.al&quot;,
+          &quot;line&quot;: 66,
+          &quot;severity&quot;: &quot;warning&quot;,
+          &quot;code&quot;: &quot;AA0206&quot;,
+          &quot;source&quot;: &quot;CodeCop&quot;,
+          &quot;message&quot;: &quot;The variable &#x27;InvNo&#x27; is initialized but not used.&quot;
+        },
+        {
+          &quot;file&quot;: &quot;HotelManagement.Codeunit.al&quot;,
+          &quot;line&quot;: 198,
+          &quot;severity&quot;: &quot;warning&quot;,
+          &quot;code&quot;: &quot;AA0005&quot;,
+          &quot;source&quot;: &quot;CodeCop&quot;,
+          &quot;message&quot;: &quot;Only use BEGIN..END to enclose compound statements.&quot;
+        },
+        {
+          &quot;file&quot;: &quot;HotelManagement.Codeunit.al&quot;,
+          &quot;line&quot;: 285,
+          &quot;severity&quot;: &quot;warning&quot;,
+          &quot;code&quot;: &quot;AA0139&quot;,
+          &quot;source&quot;: &quot;CodeCop&quot;,
+          &quot;message&quot;: &quot;Possible overflow assigning &#x27;Text&#x27; to &#x27;Code[50]&#x27;.&quot;
+        },
+        {
+          &quot;file&quot;: &quot;HotelManagement.Codeunit.al&quot;,
+          &quot;line&quot;: 218,
+          &quot;severity&quot;: &quot;warning&quot;,
+          &quot;code&quot;: &quot;AA0139&quot;,
+          &quot;source&quot;: &quot;CodeCop&quot;,
+          &quot;message&quot;: &quot;Possible overflow assigning &#x27;Text&#x27; to &#x27;Code[20]&#x27;.&quot;
+        }
+      ]
+    },
+    &quot;object_contract&quot;: {
+      &quot;status&quot;: &quot;success&quot;,
+      &quot;passed&quot;: true,
+      &quot;declared_id_ranges&quot;: [
+        {
+          &quot;from&quot;: 50100,
+          &quot;to&quot;: 50149
+        }
+      ],
+      &quot;structural_problems&quot;: [],
+      &quot;objects_checked&quot;: 17,
+      &quot;out_of_range_declarations&quot;: [],
+      &quot;all_declarations&quot;: [
+        {
+          &quot;file&quot;: &quot;HotelLifecycleTests.Codeunit.al&quot;,
+          &quot;kind&quot;: &quot;codeunit&quot;,
+          &quot;id&quot;: 50101,
+          &quot;name&quot;: &quot;Hotel Lifecycle Tests&quot;
+        },
+        {
+          &quot;file&quot;: &quot;HotelManagement.Codeunit.al&quot;,
+          &quot;kind&quot;: &quot;codeunit&quot;,
+          &quot;id&quot;: 50100,
+          &quot;name&quot;: &quot;Hotel Management&quot;
+        },
+        {
+          &quot;file&quot;: &quot;HotelReservationStatus.Enum.al&quot;,
+          &quot;kind&quot;: &quot;enum&quot;,
+          &quot;id&quot;: 50100,
+          &quot;name&quot;: &quot;Hotel Reservation Status&quot;
+        },
+        {
+          &quot;file&quot;: &quot;HotelServiceType.Enum.al&quot;,
+          &quot;kind&quot;: &quot;enum&quot;,
+          &quot;id&quot;: 50101,
+          &quot;name&quot;: &quot;Hotel Service Type&quot;
+        },
+        {
+          &quot;file&quot;: &quot;HotelUserRole.Enum.al&quot;,
+          &quot;kind&quot;: &quot;enum&quot;,
+          &quot;id&quot;: 50102,
+          &quot;name&quot;: &quot;Hotel User Role&quot;
+        },
+        {
+          &quot;file&quot;: &quot;HotelLedgerEntries.Page.al&quot;,
+          &quot;kind&quot;: &quot;page&quot;,
+          &quot;id&quot;: 50106,
+          &quot;name&quot;: &quot;Hotel Ledger Entries&quot;
+        },
+        {
+          &quot;file&quot;: &quot;HotelReservationCard.Page.al&quot;,
+          &quot;kind&quot;: &quot;page&quot;,
+          &quot;id&quot;: 50104,
+          &quot;name&quot;: &quot;Hotel Reservation Card&quot;
+        },
+        {
+          &quot;file&quot;: &quot;HotelReservationList.Page.al&quot;,
+          &quot;kind&quot;: &quot;page&quot;,
+          &quot;id&quot;: 50103,
+          &quot;name&quot;: &quot;Hotel Reservation List&quot;
+        },
+        {
+          &quot;file&quot;: &quot;HotelRoomCard.Page.al&quot;,
+          &quot;kind&quot;: &quot;page&quot;,
+          &quot;id&quot;: 50102,
+          &quot;name&quot;: &quot;Hotel Room Card&quot;
+        },
+        {
+          &quot;file&quot;: &quot;HotelRoomList.Page.al&quot;,
+          &quot;kind&quot;: &quot;page&quot;,
+          &quot;id&quot;: 50101,
+          &quot;name&quot;: &quot;Hotel Room List&quot;
+        },
+        {
+          &quot;file&quot;: &quot;HotelServiceChargeSubform.Page.al&quot;,
+          &quot;kind&quot;: &quot;page&quot;,
+          &quot;id&quot;: 50105,
+          &quot;name&quot;: &quot;Hotel Service Charge Subform&quot;
+        },
+        {
+          &quot;file&quot;: &quot;HotelSetup.Page.al&quot;,
+          &quot;kind&quot;: &quot;page&quot;,
+          &quot;id&quot;: 50100,
+          &quot;name&quot;: &quot;Hotel Setup&quot;
+        },
+        {
+          &quot;file&quot;: &quot;HotelLedgerEntry.Table.al&quot;,
+          &quot;kind&quot;: &quot;table&quot;,
+          &quot;id&quot;: 50104,
+          &quot;name&quot;: &quot;Hotel Ledger Entry&quot;
+        },
+        {
+          &quot;file&quot;: &quot;HotelReservationHeader.Table.al&quot;,
+          &quot;kind&quot;: &quot;table&quot;,
+          &quot;id&quot;: 50102,
+          &quot;name&quot;: &quot;Hotel Reservation Header&quot;
+        },
+        {
+          &quot;file&quot;: &quot;HotelRoom.Table.al&quot;,
+          &quot;kind&quot;: &quot;table&quot;,
+          &quot;id&quot;: 50101,
+          &quot;name&quot;: &quot;Hotel Room&quot;
+        },
+        {
+          &quot;file&quot;: &quot;HotelServiceChargeLine.Table.al&quot;,
+          &quot;kind&quot;: &quot;table&quot;,
+          &quot;id&quot;: 50103,
+          &quot;name&quot;: &quot;Hotel Service Charge Line&quot;
+        },
+        {
+          &quot;file&quot;: &quot;HotelSetup.Table.al&quot;,
+          &quot;kind&quot;: &quot;table&quot;,
+          &quot;id&quot;: 50100,
+          &quot;name&quot;: &quot;Hotel Setup&quot;
+        }
+      ]
+    },
+    &quot;security_permissions&quot;: {
+      &quot;status&quot;: &quot;success&quot;,
+      &quot;passed&quot;: true,
+      &quot;missing_roles&quot;: [],
+      &quot;violations&quot;: [],
+      &quot;notes&quot;: [
+        &quot;Finance permission set has no object explicitly named &#x27;refund&#x27;. This is common when refund authorization is enforced at runtime via a security-management codeunit rather than a granular AL permission grant — not necessarily a defect on its own.&quot;
+      ],
+      &quot;roles&quot;: {
+        &quot;front_desk&quot;: {
+          &quot;name&quot;: &quot;Hotel Front Desk&quot;,
+          &quot;file&quot;: &quot;HotelFrontDesk.PermissionSet.al&quot;,
+          &quot;refund_permissions&quot;: []
+        },
+        &quot;finance&quot;: {
+          &quot;name&quot;: &quot;Hotel Finance&quot;,
+          &quot;file&quot;: &quot;HotelFinance.PermissionSet.al&quot;,
+          &quot;refund_permissions&quot;: []
+        },
+        &quot;admin&quot;: {
+          &quot;name&quot;: &quot;Hotel Admin&quot;,
+          &quot;file&quot;: &quot;HotelAdmin.PermissionSet.al&quot;
+        }
+      },
+      &quot;permission_set_count&quot;: 3
+    },
+    &quot;negative_cases&quot;: {
+      &quot;status&quot;: &quot;success&quot;,
+      &quot;passed&quot;: true,
+      &quot;checks&quot;: {
+        &quot;overbooking_rejected&quot;: {
+          &quot;passed&quot;: true,
+          &quot;evidence&quot;: [
+            &quot;Conflict concept found: n\n        if checkout &lt;= checkin then\n            error(&#x27;check-out date must be after check-in date.&#x27;);\n\n        if roomno &lt;&gt; &#x27;&#x27; then begin\n            if checkoverbooking(roomno, checkin, checkout, resno) then\n                error(&#x27;overbooking: room %1 is already reserved for the period %2 to %3.&#x27;, roomno, checkin, checkout)&quot;,
+            &quot;Conflict rejection via Error() found near guard condition: n\n        if checkout &lt;= checkin then\n            error(&#x27;check-out date must be after check-in date.&#x27;);\n\n        if roomno &lt;&gt; &#x27;&#x27; then begin\n            if checkoverbooking(roomno, checkin, checkout, resno) then\n                error(&#x27;overbooking: room %1 is already reserved for the period %2 to %3.&#x27;, roomno, checkin, checkout);\n        end;\n\n        reservation.init();\n        reservation.\&quot;&quot;
+          ]
+        },
+        &quot;failed_payment_not_marked_captured&quot;: {
+          &quot;passed&quot;: true,
+          &quot;evidence&quot;: [
+            &quot;Payment failure branch found: (false);\n    end;\n\n    procedure capturedeposit(var reservation: record \&quot;hotel reservation header\&quot;; amount: decimal; paymentsuccess: boolean)\n    begin\n        if not paymentsuccess then begin\n            reservation.\&quot;deposit captured\&quot; := false;\n            reservation.modify(true);\n            error(&#x27;deposit payment failed for reservation %1.&#x27;&quot;,
+            &quot;Deposit capture rollback found: vation: record \&quot;hotel reservation header\&quot;; amount: decimal; paymentsuccess: boolean)\n    begin\n        if not paymentsuccess then begin\n            reservation.\&quot;deposit captured\&quot; := false;\n            reservation.modify(true);\n            error(&#x27;deposit payment failed for reservation %1.&#x27;, reservation.\&quot;reservation no.\&quot;);\n        end;\n\n        if&quot;,
+            &quot;Payment failure rejection via Error() found: (false);\n    end;\n\n    procedure capturedeposit(var reservation: record \&quot;hotel reservation header\&quot;; amount: decimal; paymentsuccess: boolean)\n    begin\n        if not paymentsuccess then begin\n            reservation.\&quot;deposit captured\&quot; := false;\n            reservation.modify(true);\n            error(&#x27;deposit payment failed for reservation %1.&#x27;, reservation.\&quot;reservation no.\&quot;);\n        end;\n\n        if amount &lt;= 0 then\n            error(&#x27;deposit amount must b&quot;
+          ]
+        },
+        &quot;duplicate_invoice_rejected&quot;: {
+          &quot;passed&quot;: true,
+          &quot;evidence&quot;: [
+            &quot;Duplicate invoice guard found: if userrole = enum::\&quot;hotel user role\&quot;::frontdesk then\n            error(&#x27;unauthorized: front desk role cannot generate invoices.&#x27;);\n\n        if reservation.invoiced then\n            error(&#x27;invoice %1 has already been generated for reservation %2.&#x27;, reservation.\&quot;invoice no.\&quot;, reservation.\&quot;reservation no.\&quot;);\n\n        calcula&quot;,
+            &quot;Duplicate invoice rejection via Error() found: if userrole = enum::\&quot;hotel user role\&quot;::frontdesk then\n            error(&#x27;unauthorized: front desk role cannot generate invoices.&#x27;);\n\n        if reservation.invoiced then\n            error(&#x27;invoice %1 has already been generated for reservation %2.&#x27;, reservation.\&quot;invoice no.\&quot;, reservation.\&quot;reservation no.\&quot;);\n\n        calculatevat(reservation);&quot;
+          ]
+        },
+        &quot;unauthorized_refund_rejected&quot;: {
+          &quot;passed&quot;: true,
+          &quot;evidence&quot;: [
+            &quot;Refund flow found: odify(true);\n\n        createledgerentry(reservation, optionentrytype::finalpayment, amount, &#x27;final payment received&#x27;, reservation.\&quot;invoice no.\&quot;);\n    end;\n\n    procedure processrefund(var reservation: record \&quot;hotel reservation header\&quot;; refundamount: decimal; userrole: enum \&quot;hotel user role\&quot;)\n    var\n        hotelsetup: record \&quot;hotel setup\&quot;;&quot;,
+            &quot;Inline role check with rejection found in ProcessRefund: le\&quot;)\n    var\n        hotelsetup: record \&quot;hotel setup\&quot;;\n    begin\n        hotelsetup.getsetup();\n\n        if (userrole = enum::\&quot;hotel user role\&quot;::frontdesk) and (not hotelsetup.\&quot;allow frontdesk refund\&quot;) then\n            error(&#x27;unauthorized: front desk users are not permitted to process refunds.&#x27;);\n\n        if refundamount &lt;= 0 then&quot;
+          ]
+        }
+      },
+      &quot;failed_checks&quot;: [],
+      &quot;files_scanned&quot;: [
+        &quot;HotelManagement.Codeunit.al&quot;,
+        &quot;HotelReservationStatus.Enum.al&quot;,
+        &quot;HotelServiceType.Enum.al&quot;,
+        &quot;HotelUserRole.Enum.al&quot;,
+        &quot;HotelLedgerEntries.Page.al&quot;,
+        &quot;HotelReservationCard.Page.al&quot;,
+        &quot;HotelReservationList.Page.al&quot;,
+        &quot;HotelRoomCard.Page.al&quot;,
+        &quot;HotelRoomList.Page.al&quot;,
+        &quot;HotelServiceChargeSubform.Page.al&quot;,
+        &quot;HotelSetup.Page.al&quot;,
+        &quot;HotelAdmin.PermissionSet.al&quot;,
+        &quot;HotelFinance.PermissionSet.al&quot;,
+        &quot;HotelFrontDesk.PermissionSet.al&quot;,
+        &quot;HotelLedgerEntry.Table.al&quot;,
+        &quot;HotelReservationHeader.Table.al&quot;,
+        &quot;HotelRoom.Table.al&quot;,
+        &quot;HotelServiceChargeLine.Table.al&quot;,
+        &quot;HotelSetup.Table.al&quot;
+      ]
+    },
+    &quot;llm_judge&quot;: {
+      &quot;status&quot;: &quot;error&quot;,
+      &quot;error&quot;: &quot;could not find JSON in judge response&quot;,
+      &quot;raw_output&quot;: &quot;&quot;
+    }
+  }
+}</code></pre>
+                </div>
+            </details>
+        </section>
+    </div>
 </body>
 </html>
